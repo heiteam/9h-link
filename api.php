@@ -1,36 +1,57 @@
 <?php
+/**
+ * 9H Link - 短链接 & 二维码生成器 API
+ * 
+ * 功能：短链接创建、跳转、统计、审核
+ * 存储：JSON 文件（links.json）
+ */
+
+// === 加载配置 ===
+$configFile = __DIR__ . '/config.php';
+if (!file_exists($configFile)) {
+    http_response_code(500);
+    echo json_encode(["code" => 1, "msg" => "未找到 config.php，请复制 config.sample.php 为 config.php 并填入配置"], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$config = require $configFile;
+$DOMAIN = $config['domain'] ?? 'your-domain.com';
+
+// === 安全头 ===
 header("Content-Type: application/json; charset=utf-8");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 header("X-Frame-Options: SAMEORIGIN");
 
+// === CORS ===
 $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
-if ($origin === "https://your-domain.com" || $origin === "https://www.your-domain.com") {
+if ($origin === "https://{$DOMAIN}" || $origin === "https://www.{$DOMAIN}") {
     header("Access-Control-Allow-Origin: " . $origin);
 } else {
-    header("Access-Control-Allow-Origin: https://your-domain.com");
+    header("Access-Control-Allow-Origin: https://{$DOMAIN}");
 }
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Max-Age: 86400");
+
+// === 依赖加载 ===
 require_once __DIR__ . "/blacklist.php";
 require_once __DIR__ . "/auth/session_init.php";
 require_once __DIR__ . "/smtp_mail.php";
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { http_response_code(204); exit; }
 
-// CSRF protection: validate Origin/Referer for POST
+// === CSRF 校验 ===
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
     $referer = $_SERVER["HTTP_REFERER"] ?? "";
     $valid = false;
     if ($origin !== "") {
-        $valid = preg_match("#^(https://)(www\.)?your-domain\.com#", $origin);
+        $valid = preg_match("#^(https://)(www\.)?" . preg_quote($DOMAIN, '#') . "#", $origin);
     } elseif ($referer !== "") {
-        $valid = preg_match("#^(https://)(www\.)?your-domain\.com#", $referer);
+        $valid = preg_match("#^(https://)(www\.)?" . preg_quote($DOMAIN, '#') . "#", $referer);
     }
     if (!$valid) {
         http_response_code(403);
-        echo json_encode(["code"=>1, "msg"=>"请求来源不合法"], JSON_UNESCAPED_UNICODE);
+        echo json_encode(["code" => 1, "msg" => "请求来源不合法"], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
@@ -224,7 +245,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if ($is_logged_in) {
                     $message .= "用户: " . ($_SESSION['user']['username'] ?? 'unknown') . "\n";
                 }
-                $message .= "\n审核地址: https://your-domain.com/review\n";
+                $message .= "\n审核地址: https://{$DOMAIN}/review\n";
                 smtp_send($to, $subject, $message, $notify["smtp"] ?? []);
             }
         }
@@ -244,7 +265,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // 更新配额计数
         $fpKey = 'fp_' . $fingerprint;
         $quotaData[$fpKey] = ['count'=>($cycleUsed + 1), 'cycle_start'=>$cycleStart];
-        file_put_contents($quotaFile, json_encode($quotaData, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
+        $qTmp = $quotaFile . '.tmp';
+        file_put_contents($qTmp, json_encode($quotaData, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
+        rename($qTmp, $quotaFile);
     } else {
         $links[$code]['creator_type'] = 'user';
     }
@@ -267,7 +290,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         $quota = ["used"=>$userUsed2, "max"=>$userMax, "remaining"=>$userMax - $userUsed2];
     }
-    json_out(["code"=>0,"short_url"=>"https://your-domain.com/".$code,"original"=>$url,"msg"=>$status_msg,"status"=>$status, "quota"=>$quota]);
+    json_out(["code"=>0,"short_url"=>"https://{$DOMAIN}/".$code,"original"=>$url,"msg"=>$status_msg,"status"=>$status, "quota"=>$quota]);
 }
 
 if ($_SERVER["REQUEST_METHOD"] !== "GET") json_out(["code"=>405,"msg"=>"Method Not Allowed"], 405);
@@ -308,7 +331,8 @@ if (!empty($shortCode) && !in_array(strtolower($shortCode), $reserved, true) && 
                 exit;
             }
             header("Cache-Control: no-store");
-            record_click($shortCode);
+            record_click($links, $shortCode, $linksFile);
+            save_links($linksFile, $links);
             header("Location: " . $url, true, 301);
             exit;
         }
@@ -352,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['stats'])) {
         'code' => 0,
         'data' => [
             'short_code' => $code,
-            'short_url' => 'https://your-domain.com/' . $code,
+            'short_url' => 'https://{$DOMAIN}/' . $code,
             'original_url' => $url,
             'total_clicks' => $totalClicks,
             'created' => $created,
@@ -389,13 +413,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['site_stats'])) {
     ]);
 }
 
-// 记录主站访问量
+// 记录主站访问量（原子写入）
 $vFile = __DIR__ . '/stats/site_visits.txt';
 $vCount = (int)@file_get_contents($vFile);
-file_put_contents($vFile, ($vCount + 1) . '', LOCK_EX);
+$tmp = $vFile . '.tmp';
+file_put_contents($tmp, ($vCount + 1) . '', LOCK_EX);
+rename($tmp, $vFile);
 
-// 记录点击统计
-function record_click($code) {
+// 记录点击统计（直接操作内存中的 $links，避免竞态）
+function record_click(&$links, $code, $linksFile) {
     $statsDir = __DIR__ . '/stats';
     if (!is_dir($statsDir)) mkdir($statsDir, 0755, true);
     $date = date('Y-m-d');
@@ -407,29 +433,10 @@ function record_click($code) {
     $logFile = $statsDir . '/' . $date . '.jsonl';
     $entry = json_encode(['code'=>$code,'time'=>$time,'ip'=>$ip,'ua'=>$ua,'ref'=>$ref], JSON_UNESCAPED_UNICODE);
     file_put_contents($logFile, $entry . "\n", FILE_APPEND | LOCK_EX);
-    // 更新点击计数
-    $linksFile = __DIR__ . '/links.json';
-    $raw = @file_get_contents($linksFile);
-    $data = json_decode($raw ?: '{}', true);
-    if (!is_array($data)) $data = [];
-    $target = null;
-    if (isset($data['links'][$code])) { $target = &$data['links'][$code]; }
-    elseif (isset($data[$code])) { $target = &$data[$code]; }
-    if ($target !== null) {
-        if (!is_array($target)) $target = ['url' => $target];
-        $target['clicks'] = ($target['clicks'] ?? 0) + 1;
-        $target['last_click'] = $date . ' ' . $time;
-    }
-    $tmp = $linksFile . '.tmp';
-    $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    $fp = fopen($tmp, 'c');
-    if ($fp && flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
-        fwrite($fp, $json);
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-        rename($tmp, $linksFile);
+    // 更新内存中的点击计数
+    if (isset($links[$code]) && is_array($links[$code])) {
+        $links[$code]['clicks'] = ($links[$code]['clicks'] ?? 0) + 1;
+        $links[$code]['last_click'] = $date . ' ' . $time;
     }
 }
 
