@@ -49,6 +49,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
             $data[$code]['reject_reason'] = '';
             $data[$code]['reviewed_by'] = '';
             $flash = "↩️ 已恢复：{$code}";
+        } elseif ($action === 'edit') {
+            $newUrl = trim($_POST['new_url'] ?? '');
+            $newCode = preg_replace('/[^A-Za-z0-9]/', '', $_POST['new_code'] ?? '');
+            if ($newUrl !== '') {
+                if (!preg_match('/^https?:\/\//i', $newUrl)) $newUrl = 'https://' . $newUrl;
+                if (filter_var($newUrl, FILTER_VALIDATE_URL)) {
+                    $data[$code]['url'] = $newUrl;
+                } else {
+                    $flash = "❌ URL 格式不合法";
+                }
+            }
+            if ($newCode !== '' && $newCode !== $code && !isset($data[$newCode])) {
+                $data[$newCode] = $data[$code];
+                unset($data[$code]);
+                $code = $newCode;
+            }
+            $data[$code]['updated_at'] = date('Y-m-d H:i:s');
+            $flash = $flash ?: "✅ 已更新：{$code}";
         }
         link_save($linksFile, $data);
     }
@@ -422,6 +440,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="reason-box"><strong>拒绝原因：</strong><?= htmlspecialchars($item['reject_reason']) ?></div>
       <?php endif; ?>
       <div class="actions">
+        <button type="button" class="btn btn-outline" onclick="toggleEdit('edit-<?= htmlspecialchars($item['code']) ?>')">✏️ 编辑</button>
         <?php if ($item['status'] === 'pending'): ?>
           <form method="POST" style="display:inline"><input type="hidden" name="action" value="approve"><input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>"><button class="btn btn-approve">✅ 通过</button></form>
           <button class="btn btn-reject" onclick="toggleReject(this)">❌ 拒绝</button>
@@ -438,6 +457,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <?php endif; ?>
         <form method="POST" style="display:inline" onsubmit="return confirm('确认删除 <?= htmlspecialchars($item['code']) ?>？')"><input type="hidden" name="action" value="delete"><input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>"><button class="btn btn-outline" style="color:var(--red)">🗑️ 删除</button></form>
         <a href="/profile?highlight=<?= htmlspecialchars($item['code']) ?>" class="btn btn-outline" style="font-size:11px" target="_blank">👤 查看用户</a>
+      </div>
+      <!-- 编辑表单 -->
+      <div id="edit-<?= htmlspecialchars($item['code']) ?>" style="display:none;margin-top:10px;padding:12px;background:#f9fafb;border:1px solid var(--border);border-radius:8px">
+        <form method="POST" style="display:flex;flex-direction:column;gap:8px">
+          <input type="hidden" name="action" value="edit">
+          <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--text-3);min-width:60px">跳转URL</label>
+            <input type="text" name="new_url" value="<?= htmlspecialchars($item['url']) ?>" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--text-3);min-width:60px">短码</label>
+            <input type="text" name="new_code" value="<?= htmlspecialchars($item['code']) ?>" pattern="[A-Za-z0-9]{2,12}" maxlength="12" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace">
+            <button type="submit" class="btn btn-primary" style="font-size:11px;padding:6px 14px">💾 保存</button>
+            <button type="button" class="btn btn-outline" style="font-size:11px" onclick="toggleEdit('edit-<?= htmlspecialchars($item['code']) ?>')">取消</button>
+          </div>
+        </form>
       </div>
     </div>
   <?php endforeach; endif; ?>
@@ -477,6 +513,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <?php endif; ?>
 </div>
 <script>
+function toggleEdit(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 function toggleReject(btn) {
   var box = btn.nextElementSibling;
   if (box && box.classList) box.classList.toggle('show');
