@@ -95,10 +95,8 @@ if (is_array($all)) {
         $allLinks[] = $item;
         $stats['total']++;
         $stats[$s] = ($stats[$s] ?? 0) + 1;
-        if ($creatorType === 'user' || $creatorType === 'anonymous') {
-            if ($creatorType === 'user') $stats['login']++;
-            else $stats['anon']++;
-        }
+        if ($creatorType === 'user') $stats['login']++;
+        else $stats['anon']++;
         if ($isAdminLink) $stats['admin']++;
         if ($creatorUser && !in_array($creatorUser, $users)) $users[] = $creatorUser;
     }
@@ -119,7 +117,7 @@ if ($statusFilter !== 'all') {
 
 // 按用户类型筛选
 if ($filter === 'login') {
-    $filtered = array_filter($filtered, fn($i) => $i['creator_type'] === 'user' && !$i['is_admin_link']);
+    $filtered = array_filter($filtered, fn($i) => $i['creator_type'] === 'user');
 } elseif ($filter === 'anon') {
     $filtered = array_filter($filtered, fn($i) => $i['creator_type'] !== 'user');
 } elseif ($filter === 'admin') {
