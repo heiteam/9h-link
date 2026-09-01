@@ -136,7 +136,6 @@ foreach ($allLinksData as $code => $v) {
         else $stats['anon']++;
         if ($isAdminLink) $stats['admin']++;
         if ($creatorUser && !in_array($creatorUser, $users)) $users[] = $creatorUser;
-    }
 }
 
 // ===== 筛选逻辑 =====
