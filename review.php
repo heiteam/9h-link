@@ -1,16 +1,16 @@
 <?php
 /**
- * YourLink 短链接审核后台 v2
- * - 仅限 Linux.do Boren.liu 管理
- * - 修复拒绝按钮
- * - 优化审核流程
+ * 短链接审核后台
+ * - 管理员权限由 config.php 的 admin_users 控制
+ * - 支持通过/拒绝/删除短链接
  */
 require __DIR__ . '/auth/session_init.php';
+require __DIR__ . '/admin_check.php';
 
 // ===== 权限检查 =====
 function is_admin() {
     return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
-        && isset($_SESSION['user']['username']) && $_SESSION['user']['username'] === 'Boren.liu';
+        && is_admin_user();
 }
 
 $user = $_SESSION['user'] ?? [];
@@ -28,15 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
     elseif (isset($data[$code])) $target = &$data[$code];
 
     if ($target !== null && is_array($target)) {
+        $adminName = $user['username'] ?? 'admin';
         if ($action === 'approve') {
             $target['status'] = 'approved';
             $target['reviewed_at'] = date('Y-m-d H:i:s');
-            $target['reviewed_by'] = 'Boren.liu';
+            $target['reviewed_by'] = $adminName;
             $flash = "✅ 已通过：{$code}";
         } elseif ($action === 'reject') {
             $target['status'] = 'rejected';
             $target['reviewed_at'] = date('Y-m-d H:i:s');
-            $target['reviewed_by'] = 'Boren.liu';
+            $target['reviewed_by'] = $adminName;
             $target['reject_reason'] = trim($_POST['reason'] ?? '');
             $flash = "❌ 已拒绝：{$code}";
         } elseif ($action === 'delete') {
@@ -185,7 +186,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="container">
 <?php if (!is_admin()): ?>
   <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
-    <!-- 已登录但不是 Boren.liu -->
+    <!-- 已登录但不是管理员 -->
     <div class="unauth">
       <span class="icon">🚫</span>
       <h2>无管理员权限</h2>

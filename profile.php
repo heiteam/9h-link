@@ -6,10 +6,11 @@
  * - 管理员快捷入口
  */
 require __DIR__ . '/auth/session_init.php';
+require __DIR__ . '/admin_check.php';
 
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $user = $_SESSION['user'] ?? [];
-$isAdmin = $isLoggedIn && ($user['username'] ?? '') === 'Boren.liu';
+$isAdmin = $isLoggedIn && is_admin_user();
 
 // 未登录跳转
 if (!$isLoggedIn) {

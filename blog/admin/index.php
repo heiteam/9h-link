@@ -1,13 +1,15 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../admin_check.php';
+
 // 鉴权：支持两种方式进入后台
 // 1. admin_logged_in（密码登录）
-// 2. Linux.do 登录且用户名为 Boren.liu
+// 2. Linux.do 登录且在 admin_users 白名单中
 $isAdminPass = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 $ldUser = $_SESSION['user'] ?? [];
-$isBoren = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
-    && (($ldUser['username'] ?? '') === 'Boren.liu' || ($ldUser['name'] ?? '') === 'Boren.liu');
-if (!$isAdminPass && !$isBoren) {
+$isAllowed = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
+    && is_admin_user($ldUser['username'] ?? '');
+if (!$isAdminPass && !$isAllowed) {
     header('Location: /blog/admin/login.php');
     exit;
 }

@@ -1,17 +1,19 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../admin_check.php';
+
 // 已通过 OAuth 登录
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: /blog/admin/');
     exit;
 }
-// Linux.do 登录且为 Boren.liu → 直接进入后台
+// Linux.do 登录且在 admin_users 白名单中 → 直接进入后台
 $ldUser = $_SESSION['user'] ?? [];
-$isBoren = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
-    && (($ldUser['username'] ?? '') === 'Boren.liu' || ($ldUser['name'] ?? '') === 'Boren.liu');
-if ($isBoren) {
+$isAllowed = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
+    && is_admin_user($ldUser['username'] ?? '');
+if ($isAllowed) {
     $_SESSION['admin_logged_in'] = true;
-    $_SESSION['admin_user'] = 'Boren.liu';
+    $_SESSION['admin_user'] = $ldUser['username'] ?? 'admin';
     header('Location: /blog/admin/');
     exit;
 }

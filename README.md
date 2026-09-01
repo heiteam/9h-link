@@ -50,68 +50,74 @@
 # 复制配置文件
 cp config.sample.php config.php
 
-# 编辑配置
+# 编置配置
 vim config.php
 ```
 
-在 `config.php` 中填入：
-- 你的域名
-- Linux.do OAuth 应用凭证
-- SMTP 邮件配置（可选，用于审核通知）
-- 管理员白名单
+### 3. 管理员权限设置
 
-### 3. 部署
+管理员权限在 `config.php` 的 `admin_users` 数组中配置：
 
-```bash
-# 克隆仓库
-git clone https://github.com/heiteam/9h-link.git
-cd 9h-link
-
-# 配置 Nginx（示例）
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
-    root /path/to/9h-link;
-    index index.html;
-
-    # 短链接重写规则
-    location ~ ^/[A-Za-z0-9]{2,12}$ {
-        try_files $uri @shortlink;
-    }
-
-    location @shortlink {
-        rewrite ^/(.+)$ /api.php?code=$1 last;
-    }
-
-    # API 路由
-    location /api.php {
-        fastcgi_pass unix:/run/php/php-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    # 静态页面
-    location /about { try_files /about.html =404; }
-    location /faq { try_files /faq.html =404; }
-    location /guide { try_files /guide.html =404; }
-    location /contact { try_files /contact.html =404; }
-    location /privacy-policy { try_files /privacy-policy.html =404; }
-    location /stats { try_files /stats.html =404; }
-
-    # 安全头
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options DENY;
-    add_header Referrer-Policy strict-origin-when-cross-origin;
-}
+```php
+return [
+    // 管理员白名单（Linux.do 用户名）
+    // 可设置多个管理员，数组中的用户拥有审核和博客管理权限
+    'admin_users' => ['your_username', 'another_admin'],
+];
 ```
 
-### 4. 文件权限
+**管理员能做什么：**
+| 功能 | 入口 | 权限控制 |
+|------|------|---------|
+| 审核短链接 | `/review` | `admin_users` 白名单 |
+| 博客后台 | `/blog/admin/` | `admin_users` 白名单 |
+| 个人中心管理入口 | `/profile` | 所有登录用户可见 |
 
-```bash
-chmod 644 *.php *.html *.json
-chmod 755 data/
-chmod 666 data/notify_config.json  # 需要 Web 服务写入
+**设置步骤：**
+1. 在 Linux.do 登录你的账号
+2. 打开 https://linux.do/oauth/applications 查看你的用户名
+3. 将用户名填入 `config.php` 的 `admin_users` 数组
+4. 登录网站后，审核和博客后台会自动对白名单用户开放
+
+### 4. 邮件发送设置
+
+邮件用于审核通知——当有新短链接提交审核时，自动邮件通知管理员。
+
+**配置方式（config.php）：**
+
+```php
+return [
+    'smtp' => [
+        'host' => 'smtp.qq.com',        // SMTP 服务器
+        'port' => 465,                   // 端口（465=SSL，587=STARTTLS）
+        'user' => 'your@qq.com',         // SMTP 用户名（通常是邮箱地址）
+        'pass' => 'your_smtp_password',  // SMTP 授权码（不是登录密码！）
+        'from' => 'your@qq.com',         // 发件人邮箱
+    ],
+];
 ```
+
+**SMTP 授权码获取方式：**
+
+| 服务商 | 获取路径 | 说明 |
+|--------|---------|------|
+| QQ 邮箱 | 设置 → 账户 → POP3/SMTP 服务 → 开启 → 生成授权码 | 16 位授权码 |
+| 163 邮箱 | 设置 → POP3/SMTP → 开启 → 客户端授权密码 | 16 位授权码 |
+| Gmail | Google 账号 → 安全 → 两步验证 → 应用专用密码 | 16 位应用密码 |
+| Outlook | Outlook.com → SMTP → 开启 → 生成应用密码 | - |
+| 企业邮箱 | 联系管理员获取 SMTP 凭证 | - |
+
+**在审核后台配置（可选）：**
+
+登录 `/review` 后，管理员可以在审核面板中实时配置邮件通知：
+- 开启/关闭通知
+- 设置接收邮箱
+- 设置通知级别（全部/仅高风险）
+- 发送测试邮件验证配置
+
+### 5. 部署
+
+详细部署步骤请参考 [DEPLOY.md](DEPLOY.md)（包含阿里云/腾讯云/AWS 一键部署脚本）。
 
 ## 项目结构
 
