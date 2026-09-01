@@ -121,6 +121,7 @@ server {
     location /guide { try_files /guide.html =404; }
     location /contact { try_files /contact.html =404; }
     location /privacy-policy { try_files /privacy-policy.html =404; }
+    location /terms { try_files /terms.html =404; }
     location /stats { try_files /stats.html =404; }
 
     location ~ ^/(data|blacklist|links) { deny all; }
