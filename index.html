@@ -66,7 +66,7 @@ crossorigin="anonymous"></script>
     <a href="/blog/" class="nav-home">博客 →</a>
   </div>
 </nav><h1>YourLink免费短链接生成器 - 粘贴网址即生短链，支持自定义短码和二维码生成</h1><div class="wrap"><div class="header"><div class="header-logo">YourLink</div><h2>短链接 & 二维码生成器</h2><p>粘贴链接即生短链，一键转二维码，无需注册</p></div><div class="tabs"><button class="tab on" data-tab="link">🔗 短链接</button><button class="tab" data-tab="qr">📱 二维码</button></div><!-- 短链接面板 --><div id="panel-link" class="panel on"><div class="fg"><label>目标链接</label><input type="text" id="url-input" placeholder="https://example.com" autocomplete="url" inputmode="url" aria-label="输入需要缩短的目标链接"></div><div class="fg"><label>自定义短码（可选）</label><div class="row"><input type="text" id="custom-input" placeholder="如：mylink（2-12位）" autocomplete="off" maxlength="12" pattern="[A-Za-z0-9]{2,12}" aria-label="自定义短码，可选"></div></div><button class="btn btn-primary" id="btn-gen" type="button">生成短链接</button>
-<div id="quota-bar" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(102,126,234,.06);border:1px solid rgba(102,126,234,.12);border-radius:8px;font-size:12px;color:var(--text-2);text-align:center;line-height:1.6"><span style="font-size:10px;color:var(--text-3);display:block;margin-bottom:4px">未登录用户每12h限5条 · 登录后无限使用</span>
+<div id="quota-bar" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(102,126,234,.06);border:1px solid rgba(102,126,234,.12);border-radius:8px;font-size:12px;color:var(--text-2);text-align:center;line-height:1.6"><span style="font-size:10px;color:var(--text-3);display:block;margin-bottom:4px">未登录用户每12h限5条 · 登录后每账号限20条</span>
   <span id="quota-text">剩余生成次数：<span id="quota-remaining">5</span>/5</span>
   <span id="quota-login" style="display:none;margin-left:8px">
     · <a href="/auth/login.php" style="color:var(--primary);font-weight:600;text-decoration:none">登录后无限使用 →</a>
@@ -183,11 +183,13 @@ crossorigin="anonymous"></script>
             btn.textContent = '已用尽，请登录';
           } else {
             login.style.display = 'none';
-            document.getElementById('quota-text').textContent = '剩余生成次数：' + q.used + '/' + q.max;
+            var pending = q.pending || 0;
+            var pendingText = pending > 0 ? '（' + pending + ' 条待审核）' : '';
+            document.getElementById('quota-text').textContent = '剩余生成次数：' + (q.max - q.used) + '/' + q.max + pendingText;
           }
         } else if(d.status || d.short_url){
           bar.style.display = 'block';
-          document.getElementById('quota-text').textContent = '✅ 已登录，无限使用';
+          document.getElementById('quota-text').textContent = '✅ 已登录，剩余 ' + (20) + '/20 条';
           login.style.display = 'none';
         }
       }).catch(function(){ showToast('❌ 网络错误'); })

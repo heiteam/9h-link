@@ -201,17 +201,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             json_out(["code"=>1, "msg"=>"生成已达上限，请 {$hours} 小时 {$mins} 分钟后再试，或登录后无限使用", "quota"=>["used"=>$cycleUsed, "max"=>$cycleMax, "remaining"=>0, "cooldown"=>$cooldown]], 403);
         }
     } else {
-        // 登录用户：最多 20 条
+        // 登录用户：最多 20 条（只计算有效链接：approved + pending，rejected 不计入）
         $username = $_SESSION['user']['username'] ?? '';
         $userMax = 20;
         $userUsed = 0;
+        $userPending = 0;
         foreach ($links as $code2 => $data2) {
             if (is_array($data2) && ($data2['creator_user'] ?? '') === $username) {
+                $linkStatus = $data2['status'] ?? 'approved';
+                if ($linkStatus === 'rejected') continue;  // rejected 不计入配额
                 $userUsed++;
+                if ($linkStatus === 'pending') $userPending++;
             }
         }
         if ($userUsed >= $userMax) {
-            json_out(["code"=>1, "msg"=>"每个账号最多可生成 {$userMax} 条短链接，请删除部分链接后继续", "quota"=>["used"=>$userUsed, "max"=>$userMax, "remaining"=>0]], 403);
+            $pendingHint = $userPending > 0 ? "（其中 {$userPending} 条待审核）" : "";
+            json_out(["code"=>1, "msg"=>"已达上限 {$userMax} 条{$pendingHint}，请到个人中心删除不需要的链接后继续", "quota"=>["used"=>$userUsed, "max"=>$userMax, "remaining"=>0, "pending"=>$userPending]], 403);
         }
     }
     
@@ -283,12 +288,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         $username = $_SESSION['user']['username'] ?? '';
         $userUsed2 = 0;
+        $userPending2 = 0;
         foreach ($links as $code2 => $data2) {
             if (is_array($data2) && ($data2['creator_user'] ?? '') === $username) {
+                $linkStatus = $data2['status'] ?? 'approved';
+                if ($linkStatus === 'rejected') continue;
                 $userUsed2++;
+                if ($linkStatus === 'pending') $userPending2++;
             }
         }
-        $quota = ["used"=>$userUsed2, "max"=>$userMax, "remaining"=>$userMax - $userUsed2];
+        $quota = ["used"=>$userUsed2, "max"=>$userMax, "remaining"=>$userMax - $userUsed2, "pending"=>$userPending2];
     }
     json_out(["code"=>0,"short_url"=>"https://{$DOMAIN}/".$code,"original"=>$url,"msg"=>$status_msg,"status"=>$status, "quota"=>$quota]);
 }
