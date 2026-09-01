@@ -24,9 +24,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $referer = $_SERVER["HTTP_REFERER"] ?? "";
     $valid = false;
     if ($origin !== "") {
-        $valid = preg_match("#^(https://)(www\.)?9h\.hk#", $origin);
+        $valid = preg_match("#^(https://)(www\.)?your-domain\.com#", $origin);
     } elseif ($referer !== "") {
-        $valid = preg_match("#^(https://)(www\.)?9h\.hk#", $referer);
+        $valid = preg_match("#^(https://)(www\.)?your-domain\.com#", $referer);
     }
     if (!$valid) {
         http_response_code(403);
