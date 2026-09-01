@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二维码营销实战：6 种二维码类型的正确用法 | YourLink博客</title>
+<meta name="description" content="WiFi二维码、电话二维码、位置二维码……每种类型都有独特的营销场景。本文用真实案例告诉你怎么选、怎么用。">
+<meta property="og:title" content="二维码营销实战：6 种二维码类型的正确用法">
+<meta property="og:description" content="WiFi二维码、电话二维码、位置二维码……每种类型都有独特的营销场景。">
+<meta property="og:url" content="https://your-domain.com/blog/qr-code-marketing">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://your-domain.com/og.png">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://your-domain.com/blog/qr-code-marketing">
+<link rel="stylesheet" href="/css/style.css?v=1787490948">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:16px;padding:0}
+.breadcrumb a{color:var(--primary);text-decoration:none;font-weight:500}
+.article{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow)}
+.article h1{font-size:22px;font-weight:800;color:var(--text);margin:0 0 8px;line-height:1.4}
+.article .meta{font-size:12px;color:var(--text-3);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.article h2{font-size:17px;font-weight:700;color:var(--text);margin:28px 0 10px;padding-left:12px;border-left:3px solid var(--primary)}
+.article h3{font-size:15px;font-weight:600;color:var(--text);margin:20px 0 8px}
+.article p{font-size:14px;color:var(--text-2);line-height:1.9;margin:0 0 14px}
+.article ul,.article ol{margin:0 0 14px;padding-left:20px;font-size:14px;color:var(--text-2);line-height:1.9}
+.article li{margin:4px 0}
+.article strong{color:var(--text)}
+.article blockquote{background:var(--primary-light);border-left:3px solid var(--primary);padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0;font-size:13px;color:var(--text-2)}
+.type-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0}
+.type-card h3{margin:0 0 6px;color:var(--primary)}
+.type-card p{margin:0;font-size:13px}
+.cta{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:20px;text-align:center;margin:24px 0}
+.cta p{font-size:14px;color:var(--text);margin:0 0 12px}
+.cta a{display:inline-block;background:var(--primary);color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px}
+.article-bottom-nav{display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.article-bottom-nav a{color:var(--primary);font-size:13px;text-decoration:none;font-weight:500}
+.related{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;text-align:center}
+.related h3{font-size:13px;color:var(--text-2);margin:0 0 8px;font-weight:600}
+.related a{color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+
+.site-nav .article-bottom-nav{display:flex;gap:4px}
+.site-nav .article-bottom-nav a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .article-bottom-nav a:hover,.site-nav .article-bottom-nav a.active{color:var(--primary);background:var(--primary-light)}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "二维码营销实战：6 种二维码类型的正确用法", "description": "WiFi二维码、电话二维码、位置二维码……每种类型都有独特的营销场景。", "url": "https://your-domain.com/blog/qr-code-marketing", "author": {"@type": "Organization", "name": "YourLink"}, "publisher": {"@type": "Organization", "name": "YourLink", "logo": {"@type": "ImageObject", "url": "https://your-domain.com/og.png"}}, "datePublished": "2026-08-23", "dateModified": "2026-08-23"}</script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" class="active">博客</a>
+      <a href="/stats" >统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" >教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+
+<nav class="breadcrumb"><a href="/">首页</a> &gt; <a href="/blog/" class="active">博客</a> &gt; 二维码营销实战</nav>
+
+<article class="article">
+  <h1>二维码营销实战：6 种二维码类型的正确用法</h1>
+  <div class="meta">2026-08-23 · 阅读约 4 分钟 · 分类：营销</div>
+
+  <p>二维码不只是「扫码打开链接」。YourLink 短链接支持 6 种二维码类型，每种都有独特的营销场景。选对类型，能让二维码的转化率提升数倍。</p>
+
+  <h2>1. 链接二维码 — 最通用的选择</h2>
+  <div class="type-card">
+    <h3>🔗 链接二维码</h3>
+    <p><strong>适用场景：</strong>海报、传单、名片、包装盒、线下门店</p>
+  </div>
+  <p>把网址变成二维码是最常见的用法。但很多人不知道的是：<strong>直接用长链接生成的二维码太密集，扫码成功率低</strong>。正确的做法是先用短链接把 URL 缩短，再用短链接生成二维码。这样二维码的点阵更稀疏，即使印刷尺寸小、光线差，也能快速识别。</p>
+  <p><strong>案例：</strong>某咖啡店把菜单链接生成二维码贴在桌上。最初用长链接（200+ 字符），二维码密密麻麻，很多客人扫不出来。换成YourLink短链接后（22 字符），二维码简化了 60%，扫码成功率从 40% 提升到 95%。</p>
+
+  <h2>2. WiFi 二维码 — 最贴心的接待</h2>
+  <div class="type-card">
+    <h3>📶 WiFi 二维码</h3>
+    <p><strong>适用场景：</strong>酒店、民宿、咖啡店、公司前台、家庭聚会</p>
+  </div>
+  <p>把 WiFi 名称和密码编码成二维码，访客扫码即可自动连接，省去手动输入密码的麻烦。特别适合密码复杂的场景（比如 WPA2 加密的 20 位随机密码）。</p>
+  <p><strong>使用方法：</strong>在YourLink 二维码面板选择「WiFi」，输入网络名称、密码和加密方式，生成即可。支持 WPA/WPA2、WEP 和无加密三种模式。</p>
+
+  <h2>3. 电话二维码 — 商务名片必备</h2>
+  <div class="type-card">
+    <h3>📞 电话二维码</h3>
+    <p><strong>适用场景：</strong>商务名片、宣传单、门店招牌、售后卡片</p>
+  </div>
+  <p>扫码后手机自动弹出拨号界面，预填电话号码。适合需要「一键联系」的场景——比如售后服务卡、房产中介名片、驾校招生海报。用户不需要手动输入号码，减少操作步骤，提升联系转化率。</p>
+
+  <h2>4. 邮箱二维码 — 正式商务场景</h2>
+  <div class="type-card">
+    <h3>✉️ 邮箱二维码</h3>
+    <p><strong>适用场景：</strong>企业宣传册、招商手册、合作邀请函</p>
+  </div>
+  <p>扫码后自动打开邮件客户端，预填收件人地址、主题和正文。特别适合 B2B 场景——客户看完宣传册后扫码就能发邮件咨询，比手动输入邮箱地址方便得多。可以预填主题（如「咨询合作-公司名」），方便你分类处理邮件。</p>
+
+  <h2>5. 文本二维码 — 离线信息载体</h2>
+  <div class="type-card">
+    <h3>📝 文本二维码</h3>
+    <p><strong>适用场景：</strong>产品说明、公告通知、WiFi 密码展示、活动规则</p>
+  </div>
+  <p>把任意文字编码成二维码。适合不需要联网就能传递信息的场景——比如产品包装上的使用说明、会议室门口的设备密码、展览中的作品介绍。</p>
+  <blockquote>注意：微信扫码纯文本二维码时，通常不会直接展示正文，会提示「复制文字内容」。如果希望扫码后直接打开网页，请使用「链接二维码」。</blockquote>
+
+  <h2>6. 位置二维码 — 线下引流利器</h2>
+  <div class="type-card">
+    <h3>📍 位置二维码</h3>
+    <p><strong>适用场景：</strong>门店导航、活动场地指引、旅游景点介绍</p>
+  </div>
+  <p>把经纬度坐标编码成二维码，扫码后自动打开地图 App 并导航到指定位置。适合连锁门店、活动现场、旅游景区等需要「引导到店」的场景。比在海报上印一大段地址方便太多。</p>
+
+  <h2>选择二维码类型速查表</h2>
+  <ul>
+    <li>想让用户<strong>打开网页</strong> → 链接二维码</li>
+    <li>想让用户<strong>连 WiFi</strong> → WiFi 二维码</li>
+    <li>想让用户<strong>打电话</strong> → 电话二维码</li>
+    <li>想让用户<strong>发邮件</strong> → 邮箱二维码</li>
+    <li>想传递<strong>文字信息</strong> → 文本二维码</li>
+    <li>想让用户<strong>导航到店</strong> → 位置二维码</li>
+  </ul>
+
+  <h2>印刷注意事项</h2>
+  <p>无论哪种二维码，印刷时都建议：</p>
+  <ul>
+    <li>尺寸不小于 <strong>2cm × 2cm</strong>（链接二维码）或 <strong>3cm × 3cm</strong>（复杂内容）</li>
+    <li>周围留出<strong>白色静区</strong>（至少 4 个模块宽度）</li>
+    <li>选择 <strong>PNG 或 SVG 格式</strong>下载，SVG 放大不失真</li>
+    <li>深色码 + 浅色背景（推荐黑白或深蓝+白底）</li>
+  </ul>
+
+  <div class="cta">
+    <p>用YourLink 生成你的第一个二维码</p>
+    <a href="/">立即生成 →</a>
+  </div>
+
+  <div class="article-bottom-nav">
+    <a href="/blog/short-link-seo-guide">← 上一篇：短链接SEO指南</a>
+    <a href="/blog/short-link-tools-comparison">下一篇：工具横评 →</a>
+  </div>
+</article>
+
+<div class="related">
+  <h3>相关文章</h3>
+  <a href="/blog/short-link-seo-guide">短链接SEO指南</a> · <a href="/blog/short-link-tools-comparison">工具横评</a> · <a href="/">生成二维码</a>
+</div>
+<p class="mt"><a href="/">← 返回首页</a></p>
+
+<script src="/auth.js"></script>
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/" class="active">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+</body>
+</html>

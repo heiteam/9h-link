@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>链接不可用 · YourLink</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}
+.card{text-align:center;padding:40px 32px;background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;border:1px solid rgba(239,68,68,.15);max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.icon{width:72px;height:72px;border-radius:50%;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.icon svg{width:36px;height:36px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,.12);color:#ef4444;margin-bottom:16px;border:1px solid rgba(239,68,68,.2)}
+h1{font-size:20px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1.4}
+p{font-size:14px;color:#9ca3af;line-height:1.7;margin:0 0 6px}
+.short-url{display:inline-block;font-family:monospace;font-size:13px;font-weight:700;color:#ef4444;background:rgba(239,68,68,.08);padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,.15);margin:12px 0 0;word-break:break-all}
+.reason-box{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.1);border-radius:10px;padding:14px 16px;margin:16px 0;text-align:left}
+.reason-box .label{font-size:11px;font-weight:600;color:#ef4444;margin-bottom:4px}
+.reason-box .text{font-size:13px;color:#d1d5db;line-height:1.6}
+.detail{font-size:12px;color:#6b7280;margin:16px 0 24px;line-height:1.6}
+.detail a{color:#667eea;text-decoration:none}
+.detail a:hover{text-decoration:underline}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .25s;border:none}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/>
+      <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+  </div>
+  <div class="badge">🚫 链接不可用</div>
+  <h1>该短链接已被拒绝</h1>
+  <div class="short-url" id="short-url">your-domain.com/****</div>
+  <div class="reason-box">
+    <div class="label">📋 拒绝原因</div>
+    <div class="text" id="reason-text">{{REJECT_REASON}}</div>
+  </div>
+  <div class="detail">
+    如需申诉请联系 <a href="mailto:cp@your-domain.com">cp@your-domain.com</a>
+  </div>
+  <a href="/" class="btn btn-primary">← 返回首页</a>
+</div>
+<script>
+var path = window.location.pathname;
+if (path.charAt(0) === '/') path = path.substring(1);
+if (path) document.getElementById('short-url').textContent = 'your-domain.com/' + path;
+</script>
+</body>
+</html>

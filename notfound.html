@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>链接不存在 · YourLink短链接</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px;overflow:hidden}
+
+/* 背景装饰 */
+.bg-deco{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden;pointer-events:none;z-index:0}
+.bg-deco .circle{position:absolute;border-radius:50%;opacity:.03}
+.bg-deco .c1{width:600px;height:600px;background:var(--primary);top:-200px;right:-200px;animation:float 20s ease-in-out infinite}
+.bg-deco .c2{width:400px;height:400px;background:#764ba2;bottom:-150px;left:-150px;animation:float 25s ease-in-out infinite reverse}
+.bg-deco .c3{width:200px;height:200px;background:var(--primary);bottom:20%;right:10%;animation:float 15s ease-in-out infinite 5s}
+@keyframes float{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-30px)}66%{transform:translate(-20px,20px)}}
+
+.card{position:relative;z-index:1;text-align:center;padding:48px 40px;background:linear-gradient(145deg,rgba(26,26,46,.95),rgba(22,33,62,.95));border-radius:24px;border:1px solid rgba(102,126,234,.12);max-width:480px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.6);backdrop-filter:blur(20px)}
+
+/* 大图标区域 */
+.icon-wrap{position:relative;width:96px;height:96px;margin:0 auto 24px}
+.icon-ring{position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(102,126,234,.2);animation:spin 20s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.icon-bg{position:absolute;inset:8px;border-radius:50%;background:linear-gradient(135deg,rgba(102,126,234,.12),rgba(118,75,162,.12));display:flex;align-items:center;justify-content:center}
+.icon-bg svg{width:40px;height:40px}
+
+/* 状态徽章 */
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 16px;border-radius:20px;background:rgba(239,68,68,.1);color:#ef4444;margin-bottom:20px;border:1px solid rgba(239,68,68,.15)}
+
+/* 标题 */
+h1{font-size:24px;font-weight:800;color:#fff;margin:0 0 6px;line-height:1.3;letter-spacing:-.3px}
+.sub{font-size:14px;color:#9ca3af;margin:0 0 20px;line-height:1.6}
+
+/* 短码显示 */
+.short-url{display:inline-flex;align-items:center;gap:8px;font-family:monospace;font-size:14px;font-weight:700;color:#667eea;background:rgba(102,126,234,.08);padding:10px 20px;border-radius:12px;border:1px solid rgba(102,126,234,.15);margin:0 0 24px;word-break:break-all;max-width:100%}
+.short-url .copy-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:rgba(102,126,234,.15);color:#667eea;cursor:pointer;border:none;font-size:13px;transition:all .2s}
+.short-url .copy-btn:hover{background:rgba(102,126,234,.25);transform:scale(1.05)}
+
+/* 提示卡片 */
+.tips{display:flex;flex-direction:column;gap:10px;margin:0 0 28px;text-align:left}
+.tip{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+.tip .dot{flex-shrink:0;width:6px;height:6px;border-radius:50%;margin-top:6px}
+.tip .dot.gray{background:#6b7280}
+.tip .dot.blue{background:#667eea}
+.tip .dot.amber{background:#f59e0b}
+.tip .txt{font-size:13px;color:#9ca3af;line-height:1.6}
+.tip .txt strong{color:#d1d5db}
+
+/* 按钮 */
+.btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .25s;border:none;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 15px rgba(102,126,234,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(102,126,234,.45)}
+.btn-secondary{background:rgba(255,255,255,.05);color:#9ca3af;border:1px solid rgba(255,255,255,.08)}
+.btn-secondary:hover{color:#fff;border-color:rgba(255,255,255,.15);transform:translateY(-1px);background:rgba(255,255,255,.08)}
+
+/* 页脚链接 */
+.footer-links{display:flex;justify-content:center;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.05)}
+.footer-links a{font-size:12px;color:#6b7280;text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:#9ca3af}
+
+/* 响应式 */
+@media(max-width:480px){
+  .card{padding:32px 24px;border-radius:20px}
+  h1{font-size:20px}
+  .icon-wrap{width:72px;height:72px}
+  .icon-bg svg{width:32px;height:32px}
+  .btn{padding:12px 20px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="bg-deco">
+  <div class="circle c1"></div>
+  <div class="circle c2"></div>
+  <div class="circle c3"></div>
+</div>
+
+<div class="card">
+  <div class="icon-wrap">
+    <div class="icon-ring"></div>
+    <div class="icon-bg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="badge">🔗 链接不存在</div>
+  <h1>这个短链接打不开</h1>
+  <p class="sub">该链接可能已被删除、过期或从未创建</p>
+
+  <div class="short-url">
+    <span id="short-url">your-domain.com/****</span>
+    <button class="copy-btn" onclick="copyShort()" title="复制短码">📋</button>
+  </div>
+
+  <div class="tips">
+    <div class="tip">
+      <div class="dot gray"></div>
+      <div class="txt"><strong>检查短码</strong> · 确认输入的短码拼写是否正确，注意区分大小写</div>
+    </div>
+    <div class="tip">
+      <div class="dot blue"></div>
+      <div class="txt"><strong>生成新链接</strong> · <a href="/" style="color:#667eea;text-decoration:none">回到首页</a> 即可免费生成新的短链接，无需注册</div>
+    </div>
+    <div class="tip">
+      <div class="dot amber"></div>
+      <div class="txt"><strong>联系支持</strong> · 如果问题持续，请发送邮件至 <a href="mailto:cp@your-domain.com" style="color:#667eea;text-decoration:none">cp@your-domain.com</a></div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <a href="/" class="btn btn-primary">← 返回首页</a>
+    <a href="/faq" class="btn btn-secondary">❓ 常见问题</a>
+  </div>
+
+  <div class="footer-links">
+    <a href="/blog/">博客</a>
+    <a href="/guide">教程</a>
+    <a href="/about">关于</a>
+    <a href="/contact">联系</a>
+  </div>
+</div>
+
+<script>
+// 显示短码
+var path = window.location.pathname;
+if (path.charAt(0) === '/') path = path.substring(1);
+if (path) document.getElementById('short-url').textContent = 'your-domain.com/' + path;
+
+// 复制短码
+function copyShort(){
+  var text = document.getElementById('short-url').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅';
+    setTimeout(function(){ btn.textContent = '📋'; }, 1500);
+  });
+}
+</script>
+</body>
+</html>

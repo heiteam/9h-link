@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短链接安全指南：如何防止链接被滥用 | YourLink博客</title>
+<meta name="description" content="短链接的安全风险 短链接隐藏了真实地址，这种便利性天然带有风险——恶意用户可生成短链接指向钓鱼网站、恶意软件、欺诈页面。 作为使用者，如何保护自己 不点击来历不明的短链接：社交媒体、私信中的陌生短链接，发布者不可信尽量不点。 注意隐私：不要在短链接中包含敏感信息（密码重置 Token、个人信息、支付链接）。短链接不易被">
+<meta property="og:title" content="短链接安全指南：如何防止链接被滥用">
+<meta property="og:description" content="短链接的安全风险 短链接隐藏了真实地址，这种便利性天然带有风险——恶意用户可生成短链接指向钓鱼网站、恶意软件、欺诈页面。 作为使用者，如何保护自己 不点击来历不明的短链接：社交媒体、私信中的陌生短链接，发布者不可信尽量不点。 注意隐私：不要">
+<meta property="og:url" content="https://your-domain.com/blog/short-link-security">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://your-domain.com/og.png">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://your-domain.com/blog/short-link-security">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:16px;padding:0}
+.breadcrumb a{color:var(--primary);text-decoration:none;font-weight:500}
+.article{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow)}
+.article h1{font-size:22px;font-weight:800;color:var(--text);margin:0 0 8px;line-height:1.4}
+.article .meta{font-size:12px;color:var(--text-3);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.article h2{font-size:17px;font-weight:700;color:var(--text);margin:28px 0 10px;padding-left:12px;border-left:3px solid var(--primary)}
+.article p{font-size:14px;color:var(--text-2);line-height:1.9;margin:0 0 14px}
+.article ul,.article ol{margin:0 0 14px;padding-left:20px;font-size:14px;color:var(--text-2);line-height:1.9}
+.article li{margin:4px 0}
+.article strong{color:var(--text)}
+.article blockquote{background:var(--primary-light);border-left:3px solid var(--primary);padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0;font-size:13px;color:var(--text-2)}
+.article code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--primary)}
+.cta{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:20px;text-align:center;margin:24px 0}
+.cta p{font-size:14px;color:var(--text);margin:0 0 12px}
+.cta a{display:inline-block;background:var(--primary);color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px}
+.article-bottom-nav{display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.article-bottom-nav a{color:var(--primary);font-size:13px;text-decoration:none;font-weight:500}
+.related{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;text-align:center}
+.related h3{font-size:13px;color:var(--text-2);margin:0 0 8px;font-weight:600}
+.related a{color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "短链接安全指南：如何防止链接被滥用", "description": "短链接的安全风险 短链接隐藏了真实地址，这种便利性天然带有风险——恶意用户可生成短链接指向钓鱼网站、恶意软件、欺诈页面。 作为使用者，如何保护自己 不点击来历不明的短链接：社交媒体、私信中的陌生短链接，发布者不可信尽量不点。 注意隐私：不要", "url": "https://your-domain.com/blog/short-link-security", "author": {"@type": "Organization", "name": "YourLink"}, "publisher": {"@type": "Organization", "name": "YourLink", "logo": {"@type": "ImageObject", "url": "https://your-domain.com/og.png"}}, "datePublished": "2026-08-24", "dateModified": "2026-08-24"}</script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" class="active">博客</a>
+      <a href="/stats" >统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" >教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+<nav class="breadcrumb"><a href="/">首页</a> &gt; <a href="/blog/" class="active">博客</a> &gt; 短链接安全指南：如何防止链接被滥用</nav>
+<article class="article">
+  <h1>短链接安全指南：如何防止链接被滥用</h1>
+  <div class="meta">2026-08-24 · 阅读约 5 分钟 · 分类：安全</div>
+  
+<h2>短链接的安全风险</h2>
+<p>短链接隐藏了真实地址，这种便利性天然带有风险——恶意用户可生成短链接指向钓鱼网站、恶意软件、欺诈页面。</p>
+
+<h2>作为使用者，如何保护自己</h2>
+<p><strong>不点击来历不明的短链接</strong>：社交媒体、私信中的陌生短链接，发布者不可信尽量不点。</p>
+<p><strong>注意隐私</strong>：不要在短链接中包含敏感信息（密码重置 Token、个人信息、支付链接）。短链接不易被猜中，但一旦泄露后果更严重。</p>
+
+<h2>使用 YourLink 的注意事项</h2>
+<p>YourLink 不记录用户 IP 和生成时间，保护隐私，但不利于追溯滥用。短链接生成后永久有效，生成前请确认链接内容没问题。自定义短码不要使用易混淆字符（1 和 l、0 和 O）。</p>
+
+<h2>总结</h2>
+<p>短链接本身不是安全漏洞。作为使用者注意保护隐私，作为平台防止滥用。做到这两点，短链接就是安全又高效的网络工具。</p>
+
+  
+<h2>真实案例：钓鱼短链接长什么样</h2>
+<p>了解攻击手法才能有效防骗。一个典型的钓鱼链条是这样的：</p>
+<ol>
+  <li>攻击者注册一个和知名服务相似度极高的跳转域名</li>
+  <li>生成短链接指向仿冒登录页（看起来像银行/支付平台/邮箱登录）</li>
+  <li>把短链接包装成「您的账户异常，请点击验证」「您的快递已到，请签收」等话术群发</li>
+  <li>用户在仿冒页面输入账号密码，信息被窃取</li>
+</ol>
+<p>识别关键：<strong>短链接域名本身</strong>。YourLink 的短链接统一使用 your-domain.com 域名，你可以通过记住域名前缀来快速判断。此外，不要在任何页面输入密码前，先核对浏览器地址栏的域名拼写。</p>
+
+<h2>作为平台方，YourLink 做了什么</h2>
+<p>YourLink 在安全方面已经做了一些防护：</p>
+<ul>
+  <li>禁止生成指向本地地址（如 127.0.0.1）和内网地址的短链接，防止 SSRF</li>
+  <li>禁止生成指向常见敏感端口的短链接</li>
+  <li>全站 HTTPS 加密，CSP 安全策略防止 XSS</li>
+  <li>敏感路径（如 admin.json、链接数据文件）外网访问全部返回 404</li>
+</ul>
+<p>如果你在 YourLink 上发现了可疑链接，欢迎通过 <a href="mailto:cp@your-domain.com">cp@your-domain.com</a> 举报，我们会尽快处理。</p>
+
+<div class="cta">
+    <p>想试试免费的短链接生成器？</p>
+    <a href="/">立即生成短链接 →</a>
+  </div>
+  <div class="article-bottom-nav">
+    <a href="/blog/qr-code-tools-comparison">← 二维码生成工具推荐：免费 vs 付费怎么选</a>
+    <a href="/blog/qr-code-event-checkin">如何用二维码提升线下活动签到效率 →</a>
+  </div>
+</article>
+<div class="related">
+  <h3>相关文章</h3>
+  <a href="/blog/short-link-seo-guide">短链接对 SEO 到底有没有用？一文讲透</a> · <a href="/blog/qr-code-marketing">二维码营销实战：6 种二维码类型的正确用法</a> · <a href="/blog/short-link-tools-comparison">2026 年免费短链接工具横评</a> · <a href="/blog/short-link-vs-qr-code">短链接 vs 二维码：什么时候该用哪个</a>
+</div>
+<p class="mt"><a href="/">← 返回首页</a></p>
+<script src="/auth.js"></script>
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/" class="active">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+</body>
+</html>

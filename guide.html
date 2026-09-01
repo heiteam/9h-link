@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用教程 · YourLink短链接和二维码生成器完整指南</title>
+<meta name="description" content="YourLink短链接和二维码生成器完整使用教程：如何生成短链接、自定义短码、生成六种二维码、下载印刷级 SVG、打印 WiFi 二维码等，图文步骤一步步带你上手。">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://your-domain.com/guide">
+<meta property="og:title" content="使用教程 · YourLink短链接和二维码生成器完整指南">
+<meta property="og:description" content="手把手教你使用YourLink短链接生成器和二维码工具：生成短链接、自定义短码、六种二维码、PNG/SVG 下载、WiFi 二维码等完整教程。">
+<meta property="og:url" content="https://your-domain.com/guide">
+<meta property="og:type" content="website">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.hdr{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow);text-align:center;margin-bottom:20px}
+.hdr h1{position:static;width:auto;height:auto;overflow:visible;clip:none;white-space:normal;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.hdr p{color:var(--text-2);font-size:13px}
+.card-c{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:12px;line-height:1.7}
+.card-c h2{color:var(--text);font-size:16px;font-weight:700;margin:0 0 10px;padding-left:12px;border-left:3px solid var(--primary)}
+.card-c h3{color:var(--text);font-size:14px;font-weight:700;margin:16px 0 6px}
+.card-c p{color:var(--text-2);font-size:13px;margin:0 0 10px;line-height:1.8}
+.card-c ul,.card-c ol{color:var(--text-2);margin:0 0 10px;padding-left:20px;font-size:13px;line-height:1.8}
+.card-c li{margin:4px 0}
+.card-c a{color:var(--primary);font-weight:600}
+.card-c strong{color:var(--text)}
+.card-c code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--primary)}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+.tip{background:var(--primary-light);border-left:3px solid var(--primary);padding:10px 14px;margin:12px 0;border-radius:0 8px 8px 0;font-size:13px;color:var(--text-2)}
+.step-num{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;margin-right:8px}
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "HowTo", "name": "如何使用YourLink生成短链接和二维码", "description": "一步步教你使用YourLink短链接和二维码生成器，从生成短链接到下载印刷级二维码。", "totalTime": "PT3M", "step": [
+{"@type": "HowToStep", "name": "打开YourLink首页", "text": "访问 https://your-domain.com 打开短链接和二维码生成工具。"},
+{"@type": "HowToStep", "name": "粘贴目标链接", "text": "在目标链接输入框中粘贴需要缩短的网址。"},
+{"@type": "HowToStep", "name": "（可选）填写自定义短码", "text": "在自定义短码输入框中填写 2-12 位字母数字，如 mylink。"},
+{"@type": "HowToStep", "name": "生成短链接", "text": "点击「生成短链接」按钮，系统返回形如 https://your-domain.com/mylink 的短网址。"},
+{"@type": "HowToStep", "name": "复制或转二维码", "text": "点击「复制」直接复制短链接，或点击「生成二维码」将短链接转为二维码。"},
+{"@type": "HowToStep", "name": "下载二维码", "text": "在二维码面板点击「下载PNG」或「下载SVG」获取二维码文件。"}
+]}
+</script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" >博客</a>
+      <a href="/stats" >统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" class="active">教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+
+<div class="hdr">
+  <h1>📖 使用教程</h1>
+  <p>YourLink 短链接和二维码生成器的完整上手指南</p>
+</div>
+
+<div class="card-c">
+  <h2>🚀 快速开始：3 秒生成一个短链接</h2>
+  <p><span class="step-num">1</span>访问 <strong>https://your-domain.com</strong>，首页就是生成工具</p>
+  <p><span class="step-num">2</span>在「目标链接」输入框中粘贴需要缩短的网址</p>
+  <p><span class="step-num">3</span>点击「<strong>生成短链接</strong>」按钮</p>
+  <p><span class="step-num">4</span>点击「复制」即可使用，或点击「📱 生成二维码」转成二维码</p>
+  <div class="tip">💡 未登录用户每 12 小时最多可生成 5 条短链接，页面会显示剩余次数和倒计时。所有短链接永久有效。登录 Linux.do 账号后无限使用，链接长期有效。</div>
+</div>
+
+<div class="card-c">
+  <h2>🎨 自定义短码：让链接更有辨识度</h2>
+  <p>默认生成的短链接是 <code>your-domain.com/xxxx</code> 的随机短码。如果你希望短链接更好记、更适合品牌传播，可以使用自定义短码：</p>
+  <p><span class="step-num">1</span>在「自定义短码（可选）」输入框中填写 2-12 位字母数字</p>
+  <p><span class="step-num">2</span>例如填写 <code>hd2026</code>、<code>mylink</code>、<code>vip</code></p>
+  <p><span class="step-num">3</span>点击生成，得到 <code>your-domain.com/hd2026</code> 这样的短链接</p>
+  <div class="tip">💡 短码要用有意义的英文单词、拼音或缩写，比随机字符点击率更高。不同渠道可以用不同短码（如 wechat / weibo / douyin），方便追踪来源。</div>
+</div>
+
+<div class="card-c">
+  <h2>📱 二维码生成：六种类型逐个讲</h2>
+  <p>首页切换到「📱 二维码」面板，可以看到六种二维码类型：</p>
+
+  <h3>🔗 链接二维码</h3>
+  <p>输入网址，生成扫码直接打开的二维码。适合海报、传单、名片、包装盒等线下物料。</p>
+  <p><strong>进阶技巧：</strong>先用短链接功能把长网址缩短，再用<strong>短链接</strong>生成二维码。短链接只有十几个字符，二维码点阵更稀疏，扫码成功率更高。很多咖啡店的长链接二维码扫码失败率高达 60%，换成短链接后成功率能到 95%。</p>
+
+  <h3>📝 文本二维码</h3>
+  <p>输入任意文字（支持中文），生成不需要联网就能读取的二维码。适合产品说明、公告、设备信息等离线场景。</p>
+  <div class="tip">💡 注意：微信扫码纯文本二维码时，通常不会直接展示正文，会提示「复制文字内容」。如果希望扫码后直接打开网页，请使用「链接二维码」。</div>
+
+  <h3>📶 WiFi 二维码</h3>
+  <p>输入网络名称（SSID）、密码、加密方式，生成后访客扫码即可自动连接 WiFi。</p>
+  <p><strong>适用场景：</strong>酒店民宿、咖啡店、公司前台、家庭聚会。特别是密码复杂的场景（如 20 位随机密码），省去手动输入的麻烦。</p>
+
+  <h3>📞 电话二维码</h3>
+  <p>输入电话号码，扫码后自动弹出拨号界面。适合商务名片、售后服务卡、门店招牌。</p>
+
+  <h3>✉️ 邮箱二维码</h3>
+  <p>输入邮箱地址，可附加主题和正文，扫码后自动打开邮件客户端并预填内容。适合企业宣传册、招商手册、合作邀请。</p>
+
+  <h3>📍 位置二维码</h3>
+  <p>输入纬度和经度坐标，可附加地点名称，扫码后打开地图导航。适合门店导航、活动场地指引、旅游景点。</p>
+</div>
+
+<div class="card-c">
+  <h2>🖨️ 下载二维码：PNG 和 SVG 怎么选</h2>
+  <p>YourLink 支持下载两种格式：</p>
+  <ul>
+    <li><strong>PNG（位图）</strong>：适合网页、微信、社交媒体、PPT。分辨率足够屏幕使用。</li>
+    <li><strong>SVG（矢量）</strong>：无限放大不模糊，适合海报、名片、易拉宝、包装盒等印刷物料。印刷厂可能直接要求 SVG 或高分辨率 PDF。</li>
+  </ul>
+  <p><strong>印刷注意事项：</strong>二维码建议至少 2×2 cm，深色前景 + 浅色背景，周围留白，选用亚光材质避免反光。印刷前先在普通纸上打样测试，确保手机在正常光线下 3 秒内能识别。</p>
+</div>
+
+<div class="card-c">
+  <h2>👤 个人中心：管理你的短链接</h2>
+  <p>登录 Linux.do 账号后，点击页面右上角头像进入<strong>个人中心</strong>。</p>
+  <p>在个人中心你可以：</p>
+  <ul>
+    <li>查看自己生成的所有短链接</li>
+    <li>修改已有短链接的跳转目标</li>
+    <li>删除不需要的短链接</li>
+    <li>查看每个链接的点击量</li>
+  </ul>
+  <div class="tip">💡 未登录用户生成的短链接每 12 小时限 5 条，永久有效，由 IP 绑定但无法在个人中心查看和管理。登录后所有链接自动关联到你的账号，无限使用。
+
+<h3>修改跳转链接</h3>
+<p>在个人中心找到需要修改的短链接，点击「✏️ 修改跳转」，输入新的目标 URL 并保存即可。修改后短链接不变，跳转目的地立即更新。</p>
+
+<h3>删除短链接</h3>
+<p>在个人中心点击「🗑️ 删除」，确认后该短链接即被永久删除，无法恢复。</p></div>
+
+<h2>🔗 短链接 + 二维码组合玩法</h2>
+  <p><strong>方案一：线上线下统一入口</strong></p>
+  <p>先生成用于活动的短链接（如 <code>your-domain.com/hd2026</code>），再把短链接转成二维码印在物料上。这样线上（点击短链接）和线下（扫码）走同一入口，方便统一统计和后续更新指向页面。</p>
+  <p><strong>方案二：海报双通道</strong></p>
+  <p>海报上同时印二维码和短链接文字。习惯扫码的扫码，不想扫码的手动输入短链接，覆盖不同用户习惯。</p>
+  <p><strong>方案三：渠道区分</strong></p>
+  <p>同一个活动为不同渠道生成不同短码（<code>your-domain.com/wx</code>、<code>your-domain.com/wb</code>、<code>your-domain.com/dy</code>），通过各渠道的后续转化判断哪个渠道效果最好，优化投放预算。</p>
+</div>
+
+<div class="card-c">
+  <h2>⚠️ 常见操作注意事项</h2>
+  <ul>
+    <li>目标链接请填写完整地址（以 <code>https://</code> 开头），不带协议可能无法跳转</li>
+    <li>自定义短码不能为纯数字，且需未被占用</li>
+    <li>短链接永久有效，生成前请确认链接内容没问题</li>
+    <li>敏感信息（密码、Token、个人数据）不建议放进短链接或二维码中</li>
+    <li>WiFi 二维码包含网络密码，请谨慎打印在太公开的场合</li>
+  </ul>
+</div>
+
+<div class="related" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;text-align:center"><h3 style="font-size:13px;color:var(--text-2);margin:0 0 8px;font-weight:600">相关页面</h3><a href="/faq" style="color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px">常见问题</a> · <a href="/blog/" style="color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px">博客</a> · <a href="/about" style="color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px">关于我们</a> · <a href="/" style="color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px">返回首页</a></div>
+<p class="mt"><a href="/">← 返回首页</a></p>
+
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide" class="active">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+<script src="/auth.js"></script>
+</body>
+</html>

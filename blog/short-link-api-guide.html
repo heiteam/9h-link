@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短链接 API 接入指南：开发者的集成方案 | YourLink博客</title>
+<meta name="description" content="为什么需要 API 集成 手动生成短链接够用了，但需要在应用、小程序、CMS 中自动生成时，API 可以让程序自动调用，批量生成短码。 API 基本原理 短链接 API 通常遵循 RESTful 设计：生成短链接（POST 提交目标网址，返回短码），访问短链接（GET 短码，301 跳转到目标网址）。 集成注意事项 短">
+<meta property="og:title" content="短链接 API 接入指南：开发者的集成方案">
+<meta property="og:description" content="为什么需要 API 集成 手动生成短链接够用了，但需要在应用、小程序、CMS 中自动生成时，API 可以让程序自动调用，批量生成短码。 API 基本原理 短链接 API 通常遵循 RESTful 设计：生成短链接（POST 提交目标网址，返">
+<meta property="og:url" content="https://your-domain.com/blog/short-link-api-guide">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://your-domain.com/og.png">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://your-domain.com/blog/short-link-api-guide">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:16px;padding:0}
+.breadcrumb a{color:var(--primary);text-decoration:none;font-weight:500}
+.article{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow)}
+.article h1{font-size:22px;font-weight:800;color:var(--text);margin:0 0 8px;line-height:1.4}
+.article .meta{font-size:12px;color:var(--text-3);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.article h2{font-size:17px;font-weight:700;color:var(--text);margin:28px 0 10px;padding-left:12px;border-left:3px solid var(--primary)}
+.article p{font-size:14px;color:var(--text-2);line-height:1.9;margin:0 0 14px}
+.article ul,.article ol{margin:0 0 14px;padding-left:20px;font-size:14px;color:var(--text-2);line-height:1.9}
+.article li{margin:4px 0}
+.article strong{color:var(--text)}
+.article blockquote{background:var(--primary-light);border-left:3px solid var(--primary);padding:12px 16px;margin:16px 0;border-radius:0 8px 8px 0;font-size:13px;color:var(--text-2)}
+.article code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--primary)}
+.cta{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:20px;text-align:center;margin:24px 0}
+.cta p{font-size:14px;color:var(--text);margin:0 0 12px}
+.cta a{display:inline-block;background:var(--primary);color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px}
+.article-bottom-nav{display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.article-bottom-nav a{color:var(--primary);font-size:13px;text-decoration:none;font-weight:500}
+.related{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;text-align:center}
+.related h3{font-size:13px;color:var(--text-2);margin:0 0 8px;font-weight:600}
+.related a{color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "短链接 API 接入指南：开发者的集成方案", "description": "为什么需要 API 集成 手动生成短链接够用了，但需要在应用、小程序、CMS 中自动生成时，API 可以让程序自动调用，批量生成短码。 API 基本原理 短链接 API 通常遵循 RESTful 设计：生成短链接（POST 提交目标网址，返", "url": "https://your-domain.com/blog/short-link-api-guide", "author": {"@type": "Organization", "name": "YourLink"}, "publisher": {"@type": "Organization", "name": "YourLink", "logo": {"@type": "ImageObject", "url": "https://your-domain.com/og.png"}}, "datePublished": "2026-08-24", "dateModified": "2026-08-24"}</script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" class="active">博客</a>
+      <a href="/stats" >统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" >教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+<nav class="breadcrumb"><a href="/">首页</a> &gt; <a href="/blog/" class="active">博客</a> &gt; 短链接 API 接入指南：开发者的集成方案</nav>
+<article class="article">
+  <h1>短链接 API 接入指南：开发者的集成方案</h1>
+  <div class="meta">2026-08-24 · 阅读约 6 分钟 · 分类：技术教程</div>
+  
+<h2>为什么需要 API 集成</h2>
+<p>手动生成短链接够用了，但需要在应用、小程序、CMS 中自动生成时，API 可以让程序自动调用，批量生成短码。</p>
+
+<h2>API 基本原理</h2>
+<p>短链接 API 通常遵循 RESTful 设计：生成短链接（POST 提交目标网址，返回短码），访问短链接（GET 短码，301 跳转到目标网址）。</p>
+
+<h2>集成注意事项</h2>
+<p><strong>短码唯一性</strong>：每个短码在系统中唯一，建议先检查短码是否可用。</p>
+<p><strong>请求频率限制</strong>：API 通常有频率限制，批量生成请控制频率或申请更高配额。</p>
+<p><strong>错误处理</strong>：做好网络超时重试、错误码日志记录、降级方案（API 不可用时生成随机短码）。</p>
+<p><strong>HTTPS</strong>：所有 API 请求使用 HTTPS，确保传输安全。</p>
+
+<h2>应用场景</h2>
+<p>电商商品链接自动生成短链接方便分享、CMS 发布文章时自动生成短链接、营销自动化工具在发送邮件时替换链接为短链接、小程序分享功能使用短链接减少长度。</p>
+
+  
+<h2>附近：一个完整的最小接入示例</h2>
+<p>以 PHP 为例，展示调用短链接 API 的核心逻辑（仅示意，YourLink 的开放 API 以正式文档为准）：</p>
+<pre><code>// 生成短链接
+$ch = curl_init('https://api.your-domain.com/shorten');
+curl_setopt($ch, CURLOPT_POST, 1);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'url' => 'https://example.com/long/path',
+    'code' => 'mycode'   // 可选
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+$resp = curl_exec($ch);
+$data = json_decode($resp, true);
+echo $data['short_url'];  // https://your-domain.com/mycode</code></pre>
+
+<h2>接入后的监控与告警</h2>
+<p>API 接入只是第一步，上线后还要持续监控：</p>
+<ul>
+  <li><strong>短码冲突告警</strong>：批量生成时注意收集失败响应，短码占用是常见错误</li>
+  <li><strong>请求成功率</strong>：建议记录每天的成功/失败比例，如果异常下降，及时排查是网络问题还是服务问题</li>
+  <li><strong>配额预警</strong>：在接近频率上限前设置提醒，避免高峰期被限流</li>
+  <li><strong>备用链路</strong>：关键业务建议做双保险——API 故障时降级为直接使用长链接，保证业务不中断</li>
+</ul>
+
+<div class="cta">
+    <p>想试试免费的短链接生成器？</p>
+    <a href="/">立即生成短链接 →</a>
+  </div>
+  <div class="article-bottom-nav">
+    <a href="/blog/qr-code-printing-guide">← 二维码印刷注意事项：保证扫码成功率的 5 个技巧</a>
+    <a href="/blog/wechat-ecosystem-traffic">从二维码到小程序：微信生态的引流路径 →</a>
+  </div>
+</article>
+<div class="related">
+  <h3>相关文章</h3>
+  <a href="/blog/short-link-seo-guide">短链接对 SEO 到底有没有用？一文讲透</a> · <a href="/blog/qr-code-marketing">二维码营销实战：6 种二维码类型的正确用法</a> · <a href="/blog/short-link-tools-comparison">2026 年免费短链接工具横评</a> · <a href="/blog/short-link-vs-qr-code">短链接 vs 二维码：什么时候该用哪个</a>
+</div>
+<p class="mt"><a href="/">← 返回首页</a></p>
+<script src="/auth.js"></script>
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/" class="active">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+</body>
+</html>

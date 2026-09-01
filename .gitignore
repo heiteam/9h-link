@@ -1,0 +1,21 @@
+# 配置文件（含密钥）
+config.php
+
+# 用户数据
+links.json
+data/
+stats/
+
+# 备份
+*.bak*
+*.old
+*.log
+
+# 系统文件
+.well-known/
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.swp

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 年免费短链接工具横评：YourLink vs bit.ly vs C1N | YourLink博客</title>
+<meta name="description" content="对比 YourLink、bit.ly、C1N、缩我等主流短链接工具，从免费额度、功能、易用性、稳定性四个维度帮你选出最适合的。">
+<meta property="og:title" content="2026 年免费短链接工具横评">
+<meta property="og:description" content="对比 YourLink、bit.ly、C1N、缩我等主流短链接工具。">
+<meta property="og:url" content="https://your-domain.com/blog/short-link-tools-comparison">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://your-domain.com/og.png">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://your-domain.com/blog/short-link-tools-comparison">
+<link rel="stylesheet" href="/css/style.css?v=1787490948">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:16px;padding:0}
+.breadcrumb a{color:var(--primary);text-decoration:none;font-weight:500}
+.article{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow)}
+.article h1{font-size:22px;font-weight:800;color:var(--text);margin:0 0 8px;line-height:1.4}
+.article .meta{font-size:12px;color:var(--text-3);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.article h2{font-size:17px;font-weight:700;color:var(--text);margin:28px 0 10px;padding-left:12px;border-left:3px solid var(--primary)}
+.article p{font-size:14px;color:var(--text-2);line-height:1.9;margin:0 0 14px}
+.article ul{margin:0 0 14px;padding-left:20px;font-size:14px;color:var(--text-2);line-height:1.9}
+.article li{margin:4px 0}
+.article strong{color:var(--text)}
+.table-wrap{overflow-x:auto;margin:16px 0}
+.article table{width:100%;border-collapse:collapse;font-size:13px}
+.article th{background:var(--primary-light);color:var(--text);font-weight:600;padding:10px 12px;text-align:left;border:1px solid var(--border)}
+.article td{padding:10px 12px;border:1px solid var(--border);color:var(--text-2)}
+.article tr:nth-child(even) td{background:var(--bg)}
+.cta{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:20px;text-align:center;margin:24px 0}
+.cta p{font-size:14px;color:var(--text);margin:0 0 12px}
+.cta a{display:inline-block;background:var(--primary);color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px}
+.article-bottom-nav{display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+.article-bottom-nav a{color:var(--primary);font-size:13px;text-decoration:none;font-weight:500}
+.related{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;text-align:center}
+.related h3{font-size:13px;color:var(--text-2);margin:0 0 8px;font-weight:600}
+.related a{color:var(--primary);font-size:13px;font-weight:500;text-decoration:none;margin:0 6px}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+
+.site-nav .article-bottom-nav{display:flex;gap:4px}
+.site-nav .article-bottom-nav a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .article-bottom-nav a:hover,.site-nav .article-bottom-nav a.active{color:var(--primary);background:var(--primary-light)}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "2026 年免费短链接工具横评", "description": "对比 YourLink、bit.ly、C1N、缩我等主流短链接工具。", "url": "https://your-domain.com/blog/short-link-tools-comparison", "author": {"@type": "Organization", "name": "YourLink"}, "publisher": {"@type": "Organization", "name": "YourLink", "logo": {"@type": "ImageObject", "url": "https://your-domain.com/og.png"}}, "datePublished": "2026-08-23", "dateModified": "2026-08-23"}</script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" class="active">博客</a>
+      <a href="/stats" >统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" >教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+
+<nav class="breadcrumb"><a href="/">首页</a> &gt; <a href="/blog/" class="active">博客</a> &gt; 工具横评</nav>
+
+<article class="article">
+  <h1>2026 年免费短链接工具横评</h1>
+  <div class="meta">2026-08-23 · 阅读约 6 分钟 · 分类：工具评测</div>
+
+  <p>市面上短链接工具很多，但真正<strong>免费、无需注册、永久有效</strong>的寥寥无几。本文对比了 YourLink、bit.ly、C1N、缩我等主流工具，从四个维度帮你选出最适合的。</p>
+
+  <h2>对比总览</h2>
+  <div class="table-wrap">
+  <table>
+    <tr><th>工具</th><th>免费额度</th><th>需要注册</th><th>永久有效</th><th>自定义短码</th><th>二维码</th><th>数据统计</th></tr>
+    <tr><td><strong>YourLink (your-domain.com)</strong></td><td>不限</td><td>❌ 不需要</td><td>✅</td><td>✅ 2-12位</td><td>✅ 6种类型</td><td>❌</td></tr>
+    <tr><td>bit.ly</td><td>10条/月</td><td>✅ 需要</td><td>✅</td><td>❌ 付费</td><td>✅</td><td>✅</td></tr>
+    <tr><td>C1N (c1n.cn)</td><td>不限</td><td>✅ 需要</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>缩我 (suowo.cn)</td><td>不限</td><td>✅ 需要</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>suo.im</td><td>不限</td><td>✅ 需要</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  </table>
+  </div>
+
+  <h2>逐个点评</h2>
+
+  <p><strong>YourLink 短链接 (your-domain.com)</strong></p>
+  <p>最大的优势是<strong>完全无需注册</strong>，打开网页就能用。支持短链接和二维码两种功能，6 种二维码类型（链接、文本、WiFi、电话、邮箱、位置）。适合不需要数据统计、只想快速生成短链的场景。缺点是没有访问统计功能。</p>
+
+  <p><strong>bit.ly</strong></p>
+  <p>全球最知名的短链接工具，品牌认知度高。免费版每月只能生成 10 条短链接，自定义短码和详细数据统计需要付费（$8/月起）。适合有预算的企业用户，不适合个人站长和小团队。</p>
+
+  <p><strong>C1N 短链接 (c1n.cn)</strong></p>
+  <p>国内老牌工具，功能全面：自定义域名、数据统计、微信分享卡片、小程序短链接。免费版功能够用，但需要注册登录。适合需要数据追踪的营销人员。</p>
+
+  <p><strong>缩我 (suowo.cn)</strong></p>
+  <p>功能与 C1N 类似，老牌稳定。支持短链管理、数据统计、二维码生成。需要注册，免费版无明确限制。适合长期运营的推广项目。</p>
+
+  <h2>怎么选？看你的需求</h2>
+  <ul>
+    <li><strong>只是偶尔用一下</strong>（发个朋友圈、做个海报）→ 选 <strong>YourLink</strong>，不用注册最省事</li>
+    <li><strong>需要数据统计</strong>（追踪每个渠道的点击量）→ 选 <strong>C1N 或缩我</strong></li>
+    <li><strong>企业用途、预算充足</strong>→ 选 <strong>bit.ly</strong>，品牌背书强</li>
+    <li><strong>需要自定义域名</strong>（品牌短链）→ 选 <strong>C1N</strong>，支持绑定自有域名</li>
+    <li><strong>需要微信分享卡片</strong>→ 选 <strong>C1N</strong>，原生支持</li>
+  </ul>
+
+  <h2>为什么选择 YourLink？</h2>
+  <p>YourLink 的定位很清晰：<strong>最轻量的短链接+二维码工具</strong>。不搞注册墙、不搞付费分级、不搞数据追踪。你需要的就是生成一个短链或二维码，YourLink 3 秒搞定。</p>
+  <p>如果你不需要复杂的营销数据，只是想快速生成一个干净的短链接，YourLink 是目前最省事的选择。</p>
+
+  <div class="cta">
+    <p>亲自试试，感受 3 秒生成短链接的速度</p>
+    <a href="/">立即体验 →</a>
+  </div>
+
+  <div class="article-bottom-nav">
+    <a href="/blog/qr-code-marketing">← 上一篇：二维码营销实战</a>
+    <a href="/blog/" class="active">返回博客列表</a>
+  </div>
+</article>
+
+<div class="related">
+  <h3>相关文章</h3>
+  <a href="/blog/short-link-seo-guide">短链接SEO指南</a> · <a href="/blog/qr-code-marketing">二维码营销实战</a> · <a href="/">生成短链接</a>
+</div>
+<p class="mt"><a href="/">← 返回首页</a></p>
+
+<script src="/auth.js"></script>
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/" class="active">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+</body>
+</html>

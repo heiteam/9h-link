@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短链接审核中 · YourLink</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}
+.card{text-align:center;padding:40px 32px;background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;border:1px solid rgba(102,126,234,.15);max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.icon{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(102,126,234,.15),rgba(118,75,162,.15));display:flex;align-items:center;justify-content:center;margin:0 auto 20px;position:relative}
+.icon svg{width:36px;height:36px}
+.icon-dot{position:absolute;width:14px;height:14px;border-radius:50%;background:#f59e0b;right:2px;top:2px;border:2px solid #1a1a2e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.15)}}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(245,158,11,.12);color:#f59e0b;margin-bottom:16px;border:1px solid rgba(245,158,11,.2)}
+h1{font-size:20px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1.4}
+p{font-size:14px;color:#9ca3af;line-height:1.7;margin:0 0 6px}
+.short-url{display:inline-block;font-family:monospace;font-size:13px;font-weight:700;color:#667eea;background:rgba(102,126,234,.08);padding:8px 16px;border-radius:8px;border:1px solid rgba(102,126,234,.15);margin:12px 0 0;word-break:break-all}
+.detail{font-size:12px;color:#6b7280;margin:16px 0 24px;line-height:1.6}
+.detail a{color:#667eea;text-decoration:none}
+.detail a:hover{text-decoration:underline}
+.btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .25s;border:none}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
+.btn-outline{background:transparent;color:#9ca3af;border:1px solid rgba(255,255,255,.1)}
+.btn-outline:hover{color:#fff;border-color:rgba(255,255,255,.2);transform:translateY(-1px)}
+.status-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;padding:10px 16px;background:rgba(245,158,11,.05);border-radius:8px;border:1px solid rgba(245,158,11,.1)}
+.status-bar .dot{width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s infinite}
+.status-bar span{font-size:12px;color:#f59e0b;font-weight:500}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <div class="icon-dot"></div>
+  </div>
+  <div class="badge">⏳ 安全审核中</div>
+  <h1>短链接正在接受安全审核</h1>
+  <p>该短链接已提交审核，系统正在检查目标链接的安全性。</p>
+  <div class="short-url" id="short-url">your-domain.com/****</div>
+  <div class="detail">
+    审核通过后即可正常跳转，通常只需几分钟。<br>
+    如有疑问请联系 <a href="mailto:cp@your-domain.com">cp@your-domain.com</a>
+  </div>
+  <div class="btn-group">
+    <a href="/" class="btn btn-primary">← 返回首页</a>
+    <a href="javascript:location.reload()" class="btn btn-outline">🔄 刷新检查</a>
+  </div>
+  <div class="status-bar">
+    <div class="dot"></div>
+    <span>等待管理员审核</span>
+  </div>
+</div>
+<script>
+// 从 URL 中提取短码并显示
+var path = window.location.pathname;
+if (path.charAt(0) === '/') path = path.substring(1);
+if (path) {
+  document.getElementById('short-url').textContent = 'your-domain.com/' + path;
+}
+// 每 10 秒自动刷新检查状态
+setTimeout(function(){ location.reload(); }, 10000);
+</script>
+</body>
+</html>

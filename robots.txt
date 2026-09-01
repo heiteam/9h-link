@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /api.php
+Disallow: /links.json
+Sitemap: https://your-domain.com/sitemap.xml
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2

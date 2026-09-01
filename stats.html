@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="YourLink短链接网站数据统计——访问量、短链接生成和使用情况、页面热度等运营数据。">
+<title>数据统计 · YourLink短链接</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://your-domain.com/stats">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.body-pg{max-width:720px;width:100%;margin:0 auto;padding:24px 16px 60px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:16px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h1{font-size:20px;font-weight:800;color:var(--text);margin:0 0 16px}
+.card h2{font-size:16px;font-weight:700;color:var(--text);margin:0 0 12px}
+.search-box{display:flex;gap:8px;margin-bottom:20px}
+.search-box input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--ff);outline:none}
+.search-box input:focus{border-color:var(--primary)}
+.btn{padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:opacity .2s}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.98)}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat-box{flex:1;min-width:100px;background:var(--primary-light);border-radius:8px;padding:14px;text-align:center}
+.stat-box .num{font-size:22px;font-weight:800;color:var(--primary)}
+.stat-box .lbl{font-size:11px;color:var(--text-2);margin-top:2px}
+.stat-box.big .num{font-size:28px}
+.result-card{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px}
+.result-card.show{display:block}
+.result-card h3{font-size:14px;font-weight:600;color:var(--text);margin:0 0 8px}
+.result-card p{font-size:13px;color:var(--text-2);margin:4px 0;line-height:1.6}
+.result-card .url{color:var(--primary);word-break:break-all;font-size:12px}
+.daily-list{margin-top:12px}
+.daily-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.daily-item:last-child{border:none}
+.daily-item .date{color:var(--text-2)}
+.daily-item .count{color:var(--primary);font-weight:600}
+.total-bar{background:var(--bg);border-radius:8px;padding:16px;text-align:center;margin-top:12px}
+.total-bar .num{font-size:36px;font-weight:800;color:var(--primary)}
+.total-bar .lbl{font-size:12px;color:var(--text-2);margin-top:4px}
+.refresh-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;font-size:12px;color:var(--text-3)}
+.refresh-bar .dot{width:6px;height:6px;border-radius:50%;background:var(--primary);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.progress{width:100%;height:2px;background:var(--border);border-radius:1px;margin-top:6px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);border-radius:1px;transition:width 1s linear;width:100%}
+.mt{color:var(--text-3);font-size:13px;text-align:center;margin-top:16px}
+.mt a{color:var(--primary);text-decoration:none}
+
+.site-nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -24px;width:calc(100% + 48px)}
+.site-nav .nav-left{display:flex;align-items:center;gap:24px}
+.site-nav .nav-logo{font-size:18px;font-weight:800;color:var(--primary);text-decoration:none;letter-spacing:-.5px}
+.site-nav .nav-logo span{color:var(--text)}
+.site-nav .nav-links{display:flex;gap:4px}
+.site-nav .nav-links a{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s}
+.site-nav .nav-links a:hover,.site-nav .nav-links a.active{color:var(--primary);background:var(--primary-light)}
+.site-nav .nav-right{display:flex;align-items:center;gap:8px}
+.site-nav .nav-home{font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .15s}
+.site-nav .nav-home:hover{border-color:var(--primary);color:var(--primary)}
+@media(prefers-color-scheme:dark){.site-nav{background:rgba(15,15,15,.92);border-bottom-color:var(--border)}}
+
+@media (max-width: 640px) {
+  .site-nav{padding:0 10px;height:44px}
+  .nav-logo{font-size:15px}
+  .nav-links a{font-size:11px;padding:4px 6px}
+  .nav-home{font-size:11px;padding:4px 8px}
+  .nav-left{gap:6px}
+  .nav-right{gap:4px}
+}
+@media (max-width: 420px) {
+  .nav-links a{font-size:10px;padding:3px 4px}
+  .nav-home{font-size:10px;padding:3px 6px}
+}
+
+</style>
+<script src="/auth.js"></script>
+</head>
+<body class="body-pg">
+<nav class="site-nav">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">9<span>H</span></a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/blog/" >博客</a>
+      <a href="/stats" class="active">统计</a>
+      <a href="/faq" >FAQ</a>
+      <a href="/guide" >教程</a>
+      <a href="/about" >关于</a>
+      <a href="/contact" >联系</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/" class="nav-home">← 返回首页</a>
+  </div>
+</nav>
+
+
+<div class="card">
+  <h1>📊 YourLink短链接 · 数据统计</h1>
+  <div class="total-bar">
+    <div class="num" id="total-visits">--</div>
+    <div class="lbl">主站总访问量</div>
+  </div>
+  <div class="stat-row" style="margin-top:12px">
+    <div class="stat-box"><div class="num" id="total-links">--</div><div class="lbl">短链接总数</div></div>
+    <div class="stat-box"><div class="num" id="total-clicks">--</div><div class="lbl">总点击量</div></div>
+    <div class="stat-box"><div class="num" id="today-clicks">--</div><div class="lbl">今日点击</div></div>
+  </div>
+  <div class="refresh-bar">
+    <div class="dot"></div>
+    <span id="refresh-text">数据将在 <strong id="countdown">60</strong> 秒后刷新</span>
+    <button class="btn" style="padding:4px 12px;font-size:11px" onclick="refreshNow()">立即刷新</button>
+  </div>
+  <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="card">
+  <h2>🔍 查询短链接统计</h2>
+  <p style="font-size:13px;color:var(--text-2);margin:0 0 12px">输入短码查看点击数据，例如 <strong>test123</strong></p>
+  <div class="search-box">
+    <input type="text" id="code-input" placeholder="输入短码" autocomplete="off" onkeydown="if(event.key==='Enter')queryStats()">
+    <button class="btn" onclick="queryStats()">查询</button>
+  </div>
+  <div class="result-card" id="result"></div>
+</div>
+
+<p class="mt"><a href="/">← 返回首页</a></p>
+
+<script>
+var countdown=60;
+var timer=null;
+
+function loadSiteStats(){
+  fetch('/api.php?site_stats=1')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.code===0){
+        document.getElementById('total-visits').textContent=d.data.total_visits.toLocaleString();
+        document.getElementById('total-links').textContent=d.data.total_links.toLocaleString();
+        document.getElementById('total-clicks').textContent=d.data.total_clicks.toLocaleString();
+        document.getElementById('today-clicks').textContent=d.data.today_clicks.toLocaleString();
+      }
+    }).catch(function(){});
+}
+
+function startCountdown(){
+  countdown=60;
+  document.getElementById('countdown').textContent=countdown;
+  document.getElementById('progress-fill').style.width='100%';
+  if(timer) clearInterval(timer);
+  var step=0;
+  timer=setInterval(function(){
+    countdown--;
+    step++;
+    document.getElementById('countdown').textContent=countdown;
+    document.getElementById('progress-fill').style.width=(Math.max(0,countdown/60)*100)+'%';
+    if(countdown<=0){
+      clearInterval(timer);
+      loadSiteStats();
+      startCountdown();
+    }
+  },1000);
+}
+
+function refreshNow(){
+  loadSiteStats();
+  startCountdown();
+}
+
+function queryStats(){
+  var code=document.getElementById('code-input').value.trim();
+  if(!code)return;
+  var el=document.getElementById('result');
+  el.innerHTML='<p style="color:var(--text-3)">查询中...</p>';
+  el.classList.add('show');
+  fetch('/api.php?stats='+encodeURIComponent(code))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.code!==0){el.innerHTML='<p style="color:var(--text-3)">'+d.msg+'</p>';return;}
+      var x=d.data;
+      var dailyHtml='';
+      if(x.daily&&Object.keys(x.daily).length>0){
+        dailyHtml='<div class="daily-list">';
+        var dates=Object.keys(x.daily).sort().reverse();
+        for(var i=0;i<dates.length;i++){
+          dailyHtml+='<div class="daily-item"><span class="date">'+dates[i]+'</span><span class="count">'+x.daily[dates[i]]+' 次</span></div>';
+        }
+        dailyHtml+='</div>';
+      } else {dailyHtml='<p style="color:var(--text-3);font-size:12px;margin-top:8px">暂无每日数据</p>';}
+      el.innerHTML='<h3>'+x.short_url+'</h3>'
+        +'<p>目标：<span class="url">'+x.original_url+'</span></p>'
+        +'<div class="stat-row">'
+        +'<div class="stat-box big"><div class="num">'+x.total_clicks+'</div><div class="lbl">总点击</div></div>'
+        +'<div class="stat-box"><div class="num">'+(x.created?x.created.split(' ')[0]:'-')+'</div><div class="lbl">创建日期</div></div>'
+        +'<div class="stat-box"><div class="num">'+(x.last_click?x.last_click.split(' ')[0]:'暂无')+'</div><div class="lbl">最后点击</div></div></div>'
+        +'<h3 style="font-size:13px;margin-top:12px;color:var(--text-2)">📅 每日点击</h3>'+dailyHtml;
+    }).catch(function(){el.innerHTML='<p style="color:var(--text-3)">查询失败，请重试</p>';});
+}
+
+loadSiteStats();
+startCountdown();
+</script>
+
+<script>
+(function(){
+  var nu = document.getElementById("nav-user-s");
+  if(!nu)return;
+})();
+</script>
+<div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px"><a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats" class="active">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a> · Less is more</div>
+</body>
+</html>
