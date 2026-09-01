@@ -74,8 +74,8 @@ return [
 | 个人中心管理入口 | `/profile` | 所有登录用户可见 |
 
 **设置步骤：**
-1. 在 Linux.do 登录你的账号
-2. 打开 https://linux.do/oauth/applications 查看你的用户名
+1. 登录 Linux.do，点击右上角头像 → **「个人资料」** 查看你的用户名
+2. 或直接访问 `https://linux.do/u/你的用户名` 确认
 3. 将用户名填入 `config.php` 的 `admin_users` 数组
 4. 登录网站后，审核和博客后台会自动对白名单用户开放
 

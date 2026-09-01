@@ -508,8 +508,8 @@ return [
 
 **Linux.do OAuth 配置步骤：**
 
-1. 访问 https://linux.do/oauth/applications
-2. 创建新应用
+1. 访问你的个人资料页查看用户名：`https://linux.do/u/你的用户名`
+2. 在 Linux.do 管理后台创建 OAuth 应用
 3. 填写：
    - Name: `9H Link`
    - Redirect URI: `https://your-domain.com/auth/callback.php`

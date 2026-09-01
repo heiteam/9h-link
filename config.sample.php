@@ -23,8 +23,8 @@ return [
     'domain' => 'your-domain.com',
 
     // === Linux.do OAuth ===
-    // 在 https://linux.do/oauth/applications 创建应用
-    // Redirect URI 填：https://你的域名/auth/callback.php
+    // 在 Linux.do 管理后台创建 OAuth 应用
+    // 普通用户查看自己的用户名：访问 https://linux.do/u/你的用户名
     'oauth' => [
         'client_id'     => 'YOUR_CLIENT_ID',
         'client_secret' => 'YOUR_CLIENT_SECRET',
