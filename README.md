@@ -64,7 +64,7 @@ vim config.php
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/9h-link.git
+git clone https://github.com/heiteam/9h-link.git
 cd 9h-link
 
 # 配置 Nginx（示例）
