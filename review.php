@@ -1,21 +1,23 @@
 <?php
 /**
- * 短链接审核后台
- * - 管理员权限由 config.php 的 admin_users 控制
- * - 支持通过/拒绝/删除短链接
+ * 9H 短链接管理后台 v3
+ * - 显示所有链接（按用户类型区分）
+ * - 支持筛选：全部/登录用户/未登录用户/指定用户
+ * - 管理员链接独立标记
+ * - 审核操作
  */
 require __DIR__ . '/auth/session_init.php';
 require __DIR__ . '/admin_check.php';
 
 // ===== 权限检查 =====
 function is_admin() {
-    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true
-        && is_admin_user();
+    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && is_admin_user();
 }
 
 $user = $_SESSION['user'] ?? [];
+$adminUsername = $user['username'] ?? '';
 
-// ===== 处理 POST 审核操作 =====
+// ===== 处理 POST 操作 =====
 $flash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
     $code = preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? '');
@@ -41,59 +43,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
             $target['reject_reason'] = trim($_POST['reason'] ?? '');
             $flash = "❌ 已拒绝：{$code}";
         } elseif ($action === 'delete') {
-            if (isset($data['links'][$code])) {
-                unset($data['links'][$code]);
-            } elseif (isset($data[$code])) {
-                unset($data[$code]);
-            }
+            if (isset($data['links'][$code])) unset($data['links'][$code]);
+            elseif (isset($data[$code])) unset($data[$code]);
             $flash = "🗑️ 已删除：{$code}";
         } elseif ($action === 'restore') {
             $target['status'] = 'pending';
             $target['reviewed_at'] = '';
             $target['reject_reason'] = '';
             $target['reviewed_by'] = '';
-            $flash = "↩️ 已恢复：{$code}，重新进入待审队列";
+            $flash = "↩️ 已恢复：{$code}";
         }
         $tmp = $linksFile . '.tmp';
-        $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        file_put_contents($tmp, $json);
+        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
         rename($tmp, $linksFile);
     }
 }
 
-// ===== 加载链接数据 =====
-$pending = []; $approved = []; $rejected = [];
+// ===== 加载所有链接 =====
 $linksFile = __DIR__ . '/links.json';
 $data = json_decode(@file_get_contents($linksFile), true);
-if (is_array($data)) {
-    $all = $data['links'] ?? $data;
-    if (is_array($all)) {
-        foreach ($all as $code => $v) {
-            if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $code)) continue;
-            if (!is_array($v)) $v = ['url' => $v];
-            $s = $v['status'] ?? 'approved';
-            $item = [
-                'code' => $code, 'url' => $v['url'] ?? '',
-                'created' => $v['created'] ?? '', 'clicks' => $v['clicks'] ?? 0,
-                'audit_level' => $v['audit_level'] ?? '', 'audit_reason' => $v['audit_reason'] ?? '',
-                'reviewed_at' => $v['reviewed_at'] ?? '',
-                'creator_user' => $v['creator_user'] ?? '', 'creator_user_id' => $v['creator_user_id'] ?? '',
-                'creator_ip' => $v['creator_ip'] ?? '',
-            ];
-            if ($s === 'pending') $pending[] = $item;
-            elseif ($s === 'rejected') $rejected[] = $item;
-            else $approved[] = $item;
+if (!is_array($data)) $data = [];
+$allLinks = [];
+$stats = ['total'=>0, 'pending'=>0, 'approved'=>0, 'rejected'=>0, 'login'=>0, 'anon'=>0, 'admin'=>0];
+$users = []; // 所有出现过的用户名
+
+$all = $data['links'] ?? $data;
+if (is_array($all)) {
+    foreach ($all as $code => $v) {
+        if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $code)) continue;
+        if (!is_array($v)) $v = ['url' => $v];
+        $s = $v['status'] ?? 'approved';
+        $creatorUser = $v['creator_user'] ?? '';
+        $creatorType = $v['creator_type'] ?? ($creatorUser ? 'user' : 'anonymous');
+        $isAdminLink = ($creatorUser === $adminUsername);
+
+        $item = [
+            'code' => $code,
+            'url' => $v['url'] ?? '',
+            'created' => $v['created'] ?? '',
+            'clicks' => $v['clicks'] ?? 0,
+            'status' => $s,
+            'audit_level' => $v['audit_level'] ?? '',
+            'audit_reason' => $v['audit_reason'] ?? '',
+            'reviewed_at' => $v['reviewed_at'] ?? '',
+            'creator_user' => $creatorUser,
+            'creator_user_id' => $v['creator_user_id'] ?? '',
+            'creator_ip' => $v['creator_ip'] ?? '',
+            'creator_type' => $creatorType,
+            'is_admin_link' => $isAdminLink,
+        ];
+        $allLinks[] = $item;
+        $stats['total']++;
+        $stats[$s] = ($stats[$s] ?? 0) + 1;
+        if ($creatorType === 'user' || $creatorType === 'anonymous') {
+            if ($creatorType === 'user') $stats['login']++;
+            else $stats['anon']++;
         }
+        if ($isAdminLink) $stats['admin']++;
+        if ($creatorUser && !in_array($creatorUser, $users)) $users[] = $creatorUser;
     }
 }
-usort($pending, fn($a, $b) => strcmp($b['created'], $a['created']));
 
-// ===== 邮件通知设置 =====
+// ===== 筛选逻辑 =====
+$filter = $_GET['filter'] ?? 'all';
+$search = trim($_GET['q'] ?? '');
+$statusFilter = $_GET['status'] ?? 'all';
+$userFilter = $_GET['user'] ?? '';
+
+$filtered = $allLinks;
+
+// 按状态筛选
+if ($statusFilter !== 'all') {
+    $filtered = array_filter($filtered, fn($i) => $i['status'] === $statusFilter);
+}
+
+// 按用户类型筛选
+if ($filter === 'login') {
+    $filtered = array_filter($filtered, fn($i) => $i['creator_type'] === 'user' && !$i['is_admin_link']);
+} elseif ($filter === 'anon') {
+    $filtered = array_filter($filtered, fn($i) => $i['creator_type'] !== 'user');
+} elseif ($filter === 'admin') {
+    $filtered = array_filter($filtered, fn($i) => $i['is_admin_link']);
+}
+
+// 按指定用户筛选
+if ($userFilter !== '') {
+    $filtered = array_filter($filtered, fn($i) => $i['creator_user'] === $userFilter);
+}
+
+// 搜索
+if ($search !== '') {
+    $q = strtolower($search);
+    $filtered = array_filter($filtered, fn($i) =>
+        stripos($i['code'], $q) !== false ||
+        stripos($i['url'], $q) !== false ||
+        stripos($i['creator_user'], $q) !== false ||
+        stripos($i['creator_ip'], $q) !== false
+    );
+}
+
+// 按时间倒序
+usort($filtered, fn($a, $b) => strcmp($b['created'], $a['created']));
+$filtered = array_values($filtered);
+
+// ===== 邮件设置 =====
 require_once __DIR__ . '/smtp_mail.php';
 $notifyFile = __DIR__ . '/data/notify_config.json';
 $notifyConfig = json_decode(@file_get_contents($notifyFile), true);
-if (!is_array($notifyConfig)) $notifyConfig = ['enabled'=>true, 'email'=>'cp@your-domain.com', 'level'=>'all', 'smtp'=>['host'=>'smtp.office365.com','port'=>587,'user'=>'','pass'=>'','encryption'=>'tls','from'=>'noreply@your-domain.com','from_name'=>'YourLink']];
-
+if (!is_array($notifyConfig)) $notifyConfig = ['enabled'=>false,'email'=>'','level'=>'all','smtp'=>['host'=>'','port'=>465,'user'=>'','pass'=>'','encryption'=>'ssl','from'=>'','from_name'=>'9H']];
 $notifyFlash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && is_admin()) {
     if ($_POST['action'] === 'save_notify') {
@@ -106,118 +163,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && is_admin
         $notifyConfig['smtp']['user'] = trim($_POST['smtp_user'] ?? '');
         if (!empty($_POST['smtp_pass'])) $notifyConfig['smtp']['pass'] = $_POST['smtp_pass'];
         $notifyConfig['smtp']['encryption'] = in_array($_POST['smtp_enc'] ?? '', ['ssl','tls','none']) ? $_POST['smtp_enc'] : 'ssl';
-        $notifyConfig['smtp']['from'] = trim($_POST['smtp_from'] ?? 'noreply@your-domain.com');
-        $notifyConfig['smtp']['from_name'] = trim($_POST['smtp_from_name'] ?? 'YourLink');
+        $notifyConfig['smtp']['from'] = trim($_POST['smtp_from'] ?? '');
+        $notifyConfig['smtp']['from_name'] = trim($_POST['smtp_from_name'] ?? '9H');
         file_put_contents($notifyFile, json_encode($notifyConfig, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
-        $notifyFlash = '✅ 邮件提醒设置已保存';
+        $notifyFlash = '✅ 邮件设置已保存';
     } elseif ($_POST['action'] === 'test_notify') {
         $testTo = trim($_POST['test_email'] ?? $notifyConfig['email']);
-        $testSubject = 'YourLink SMTP 测试 - ' . date('Y-m-d H:i:s');
-        $testBody = "这是一封测试邮件，来自 YourLink 短链接审核系统。
-
-发送时间: " . date('Y-m-d H:i:s') . "
-如果你收到这封邮件，说明 SMTP 配置正确。";
+        $testSubject = '9H SMTP 测试 - ' . date('Y-m-d H:i:s');
+        $testBody = "这是测试邮件，来自 9H 短链接审核系统。\n\n发送时间: " . date('Y-m-d H:i:s') . "\n收到即正常。";
         $result = smtp_send($testTo, $testSubject, $testBody, $notifyConfig['smtp']);
-        $notifyFlash = $result ? '✅ 测试邮件已发送成功，请检查 ' . htmlspecialchars($testTo) : '❌ 发送失败，请检查 SMTP 配置（确认微软365已开启SMTP AUTH、密码正确）';
+        $notifyFlash = $result ? "✅ 测试邮件已发送到 {$testTo}" : '❌ 发送失败，请检查 SMTP 配置';
     }
 }
+
+// ===== 构建用户筛选选项 =====
+$userOptions = [];
+foreach ($users as $u) {
+    $count = count(array_filter($allLinks, fn($i) => $i['creator_user'] === $u));
+    $userOptions[] = ['name'=>$u, 'count'=>$count];
+}
+usort($userOptions, fn($a,$b) => $b['count'] - $a['count']);
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>短链接审核 · YourLink管理</title>
+<title>链接管理 · 9H</title>
 <meta name="robots" content="noindex, nofollow">
 <style>
-:root{--primary:#667eea;--text:#111827;--text-2:#374151;--text-3:#6b7280;--bg:#f9fafb;--card:#fff;--border:#e5e7eb;--green:#10b981;--red:#ef4444;--amber:#f59e0b}
+:root{--primary:#667eea;--text:#111827;--text-2:#374151;--text-3:#6b7280;--bg:#f9fafb;--card:#fff;--border:#e5e7eb;--green:#10b981;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.container{max-width:960px;margin:0 auto;padding:24px 16px 60px}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border)}
+.container{max-width:1060px;margin:0 auto;padding:24px 16px 60px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border);flex-wrap:wrap;gap:12px}
 .topbar h1{font-size:20px;font-weight:800}
 .topbar .sub{font-size:12px;color:var(--text-3);margin-top:2px}
 .user-info{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px}
 .user-info img{width:28px;height:28px;border-radius:50%;border:2px solid var(--primary)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.counts{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.count-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;flex:1;min-width:120px;text-align:center}
-.count-box .num{font-size:24px;font-weight:800}
-.count-box .lbl{font-size:12px;color:var(--text-3);margin-top:4px}
-.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px}
+.counts{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.count-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;flex:1;min-width:90px;text-align:center;cursor:pointer;transition:all .2s}
+.count-box:hover{border-color:var(--primary);transform:translateY(-1px)}
+.count-box.active{border-color:var(--primary);background:rgba(102,126,234,.05)}
+.count-box .num{font-size:22px;font-weight:800}
+.count-box .lbl{font-size:11px;color:var(--text-3);margin-top:2px}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
 .badge.pending{background:#fef3c7;color:#92400e}
 .badge.approved{background:#d1fae5;color:#065f46}
 .badge.rejected{background:#fee2e2;color:#991b1b}
-.badge.block{background:#fee2e2;color:#991b1b}
-.badge.review{background:#fef3c7;color:#92400e}
-.badge.pass{background:#d1fae5;color:#065f46}
-.item{border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;background:#fff}
-.item .code-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.item .code{font-weight:800;font-size:15px;color:var(--primary);font-family:monospace}
-.item .url{font-size:13px;color:var(--text-2);word-break:break-all;margin:6px 0;background:#f9fafb;padding:8px 10px;border-radius:6px;border:1px solid var(--border)}
-.item .meta{font-size:11px;color:var(--text-3);margin-bottom:10px}
-.item .meta span{margin-right:12px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;font-family:inherit}
+.badge.user{background:#eff6ff;color:#1e40af}
+.badge.anon{background:#f3f4f6;color:#374151}
+.badge.admin{background:#faf5ff;color:#7c3aed}
+.badge.audit{background:#fef3c7;color:#92400e}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
+.filter-bar input[type="text"]{min-width:200px}
+.filter-bar select{min-width:120px}
+.filter-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.filter-tab{padding:6px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--text-2);text-decoration:none;transition:all .15s}
+.filter-tab:hover{border-color:var(--primary);color:var(--primary)}
+.filter-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.item{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;background:#fff;transition:box-shadow .15s}
+.item:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.item .code-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.item .code{font-weight:800;font-size:14px;color:var(--primary);font-family:monospace}
+.item .url{font-size:12px;color:var(--text-2);word-break:break-all;margin:6px 0;background:#f9fafb;padding:7px 10px;border-radius:6px;border:1px solid var(--border)}
+.item .meta{font-size:11px;color:var(--text-3);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px 14px}
+.item .meta span{white-space:nowrap}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:7px;border:none;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;font-family:inherit}
 .btn-approve{background:var(--green);color:#fff}
-.btn-approve:hover{background:#059669}
 .btn-reject{background:var(--red);color:#fff}
-.btn-reject:hover{background:#dc2626}
 .btn-outline{background:#fff;border:1px solid var(--border);color:var(--text-2)}
 .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
 .btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{filter:brightness(1.1)}
-.reject-box{display:none;margin-top:10px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px}
-.reject-box.show{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.reject-box input{flex:1;min-width:150px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit}
-.reject-box .btn{background:var(--red);color:#fff}
-.flash{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px}
-.unauth{max-width:480px;margin:80px auto;text-align:center;padding:40px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.08)}
+.reject-box{display:none;margin-top:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px}
+.reject-box.show{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.reject-box input[type="text"]{flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit}
+.flash{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px}
+.unauth{max-width:480px;margin:80px auto;text-align:center;padding:40px;background:var(--card);border:1px solid var(--border);border-radius:16px}
 .unauth .icon{font-size:48px;margin-bottom:16px;display:block}
 .unauth h2{font-size:18px;font-weight:800;margin-bottom:6px}
 .unauth p{font-size:14px;color:var(--text-2);margin-bottom:20px;line-height:1.6}
-.unauth .current-user{font-size:13px;color:var(--text-3);margin-bottom:20px;padding:8px 14px;background:#f3f4f6;border-radius:8px;display:inline-block}
-.sec-title{font-size:16px;font-weight:800;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
-.toggle-view{background:none;border:none;color:var(--primary);font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit}
-.empty{text-align:center;color:var(--text-3);padding:40px 0;font-size:14px}
+.sec-title{font-size:15px;font-weight:800;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.empty{text-align:center;color:var(--text-3);padding:30px 0;font-size:13px}
+.reason-box{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:11px;color:#991b1b}
+.toggle-view{background:none;border:none;color:var(--primary);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit}
+.page-info{text-align:center;font-size:12px;color:var(--text-3);margin-top:16px}
 </style>
 </head>
 <body>
 <div class="container">
 <?php if (!is_admin()): ?>
   <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
-    <!-- 已登录但不是管理员 -->
     <div class="unauth">
       <span class="icon">🚫</span>
       <h2>无管理员权限</h2>
-      <p>当前账号 <strong><?= htmlspecialchars($user['username'] ?? '?') ?></strong> 不是审核管理员。<br>审核功能仅限指定账号使用。</p>
-      <div class="current-user">👤 <?= htmlspecialchars($user['username'] ?? '') ?></div>
+      <p>当前账号 <strong><?= htmlspecialchars($user['username'] ?? '?') ?></strong> 不在管理员白名单中。</p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <a href="/" class="btn btn-outline">← 返回首页</a>
         <a href="/auth/logout.php" class="btn btn-outline">退出登录</a>
       </div>
     </div>
   <?php else: ?>
-    <!-- 未登录 -->
     <div class="unauth">
       <span class="icon">🔒</span>
-      <h2>短链接审核后台</h2>
-      <p>请使用 Linux.do 账号登录后进行审核管理。</p>
-      <a href="/auth/login.php" class="btn btn-primary" style="padding:12px 32px;font-size:15px">🔑 使用 Linux.do 登录</a>
-      <p style="margin-top:16px;font-size:12px;color:var(--text-3)"><a href="/" style="color:var(--primary)">← 返回首页</a></p>
+      <h2>短链接管理后台</h2>
+      <p>请使用 Linux.do 账号登录。</p>
+      <a href="/auth/login.php" class="btn btn-primary" style="padding:12px 32px;font-size:15px">🔑 登录</a>
     </div>
     <?php $_SESSION['login_redirect'] = '/review'; ?>
   <?php endif; ?>
 <?php else: ?>
+
   <!-- 管理员界面 -->
   <div class="topbar">
     <div>
-      <h1>📋 短链接审核</h1>
-      <p class="sub">YourLink · 短链接安全管理</p>
+      <h1>📋 链接管理</h1>
+      <p class="sub">9H · 共 <?= $stats['total'] ?> 条链接</p>
     </div>
     <div class="user-info">
       <img src="<?= htmlspecialchars($user['avatar'] ?? '') ?>" alt="" onerror="this.style.display='none'">
-      <span><?= htmlspecialchars($user['username'] ?? '') ?></span>
+      <span><?= htmlspecialchars($adminUsername) ?></span>
       <a href="/auth/logout.php" class="btn btn-outline" style="padding:4px 10px;font-size:11px">退出</a>
     </div>
   </div>
@@ -225,203 +293,147 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <?php if ($flash): ?><div class="flash"><?= htmlspecialchars($flash) ?></div><?php endif; ?>
   <?php if ($notifyFlash): ?><div class="flash"><?= htmlspecialchars($notifyFlash) ?></div><?php endif; ?>
 
-  <!-- 邮件提醒设置（默认折叠） -->
-  <div class="card" style="margin-bottom:16px">
-    <div onclick="var e=this.nextElementSibling;e.style.display=e.style.display==='none'?'block':'none';this.querySelector('.toggle-i').textContent=e.style.display==='none'?'▶':'▼'" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;user-select:none">
-      <div><strong style="font-size:14px">📧 邮件提醒设置</strong>
-      <span style="font-size:12px;color:var(--text-3);margin-left:8px"><span class="toggle-i">▶</span> 点击展开</span></div>
+  <!-- 统计概览 -->
+  <div class="counts">
+    <a href="?filter=all<?= $userFilter ? "&user={$userFilter}" : '' ?>" class="count-box <?= $statusFilter==='all'?'active':'' ?>">
+      <div class="num" style="color:var(--primary)"><?= $stats['total'] ?></div><div class="lbl">全部</div>
+    </a>
+    <a href="?filter=all&status=pending<?= $userFilter ? "&user={$userFilter}" : '' ?>" class="count-box <?= $statusFilter==='pending'?'active':'' ?>">
+      <div class="num" style="color:var(--amber)"><?= $stats['pending'] ?></div><div class="lbl">待审核</div>
+    </a>
+    <a href="?filter=all&status=approved<?= $userFilter ? "&user={$userFilter}" : '' ?>" class="count-box <?= $statusFilter==='approved'?'active':'' ?>">
+      <div class="num" style="color:var(--green)"><?= $stats['approved'] ?></div><div class="lbl">已通过</div>
+    </a>
+    <a href="?filter=all&status=rejected<?= $userFilter ? "&user={$userFilter}" : '' ?>" class="count-box <?= $statusFilter==='rejected'?'active':'' ?>">
+      <div class="num" style="color:var(--red)"><?= $stats['rejected'] ?></div><div class="lbl">已拒绝</div>
+    </a>
+  </div>
+
+  <!-- 用户类型筛选 -->
+  <div class="filter-tabs">
+    <a href="?filter=all&status=<?= $statusFilter ?><?= $userFilter ? "&user={$userFilter}" : '' ?>" class="filter-tab <?= $filter==='all'?'active':'' ?>">全部</a>
+    <a href="?filter=login&status=<?= $statusFilter ?><?= $userFilter ? "&user={$userFilter}" : '' ?>" class="filter-tab <?= $filter==='login'?'active':'' ?>">👤 登录用户 (<?= $stats['login'] ?>)</a>
+    <a href="?filter=anon&status=<?= $statusFilter ?><?= $userFilter ? "&user={$userFilter}" : '' ?>" class="filter-tab <?= $filter==='anon'?'active':'' ?>">🔗 未登录 (<?= $stats['anon'] ?>)</a>
+    <a href="?filter=admin&status=<?= $statusFilter ?><?= $userFilter ? "&user={$userFilter}" : '' ?>" class="filter-tab <?= $filter==='admin'?'active':'' ?>">⚙️ 管理员 (<?= $stats['admin'] ?>)</a>
+  </div>
+
+  <!-- 搜索 + 用户筛选 -->
+  <div class="filter-bar">
+    <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%">
+      <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+      <input type="hidden" name="status" value="<?= htmlspecialchars($statusFilter) ?>">
+      <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="搜索短码、URL、用户名、IP...">
+      <select name="user">
+        <option value="">所有用户</option>
+        <?php foreach ($userOptions as $uo): ?>
+        <option value="<?= htmlspecialchars($uo['name']) ?>" <?= $userFilter===$uo['name']?'selected':'' ?>><?= htmlspecialchars($uo['name']) ?> (<?= $uo['count'] ?>)</option>
+        <?php endforeach; ?>
+      </select>
+      <button type="submit" class="btn btn-primary" style="font-size:12px">🔍 搜索</button>
+      <?php if ($search || $userFilter): ?>
+      <a href="?filter=<?= htmlspecialchars($filter) ?>&status=<?= htmlspecialchars($statusFilter) ?>" class="btn btn-outline" style="font-size:12px">✕ 清除</a>
+      <?php endif; ?>
+    </form>
+  </div>
+
+  <!-- 链接列表 -->
+  <div class="sec-title">📋 结果 (<?= count($filtered) ?> 条)</div>
+  <?php if (empty($filtered)): ?>
+    <div class="empty">没有匹配的链接</div>
+  <?php else: foreach ($filtered as $item): ?>
+    <div class="item">
+      <div class="code-row">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="code"><a href="https://9h.hk/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">9h.hk/<?= htmlspecialchars($item['code']) ?></a> ↗</span>
+          <span class="badge <?= $item['status'] ?>"><?= $item['status']==='pending'?'待审':($item['status']==='rejected'?'已拒绝':'已通过') ?></span>
+          <?php if ($item['is_admin_link']): ?>
+            <span class="badge admin">管理员</span>
+          <?php elseif ($item['creator_type']==='user'): ?>
+            <span class="badge user">登录用户</span>
+          <?php else: ?>
+            <span class="badge anon">未登录</span>
+          <?php endif; ?>
+          <?php if ($item['audit_level']): ?>
+            <span class="badge audit"><?= htmlspecialchars($item['audit_level']) ?></span>
+          <?php endif; ?>
+        </div>
+        <span style="font-size:11px;color:var(--text-3)">点击: <?= (int)$item['clicks'] ?></span>
+      </div>
+      <div class="url"><?= htmlspecialchars($item['url']) ?></div>
+      <div class="meta">
+        <span>📅 <?= htmlspecialchars($item['created']) ?></span>
+        <span>🌐 <?= htmlspecialchars($item['creator_ip'] ?: '—') ?></span>
+        <?php if ($item['creator_user']): ?>
+        <span>👤 <?= htmlspecialchars($item['creator_user']) ?></span>
+        <?php else: ?>
+        <span>👤 匿名</span>
+        <?php endif; ?>
+        <?php if ($item['audit_reason']): ?>
+        <span>🔍 <?= htmlspecialchars($item['audit_reason']) ?></span>
+        <?php endif; ?>
+      </div>
+      <?php if (!empty($item['reject_reason'])): ?>
+        <div class="reason-box"><strong>拒绝原因：</strong><?= htmlspecialchars($item['reject_reason']) ?></div>
+      <?php endif; ?>
+      <div class="actions">
+        <?php if ($item['status'] === 'pending'): ?>
+          <form method="POST" style="display:inline"><input type="hidden" name="action" value="approve"><input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>"><button class="btn btn-approve">✅ 通过</button></form>
+          <button class="btn btn-reject" onclick="toggleReject(this)">❌ 拒绝</button>
+          <form method="POST" class="reject-box" style="display:inline-flex">
+            <input type="hidden" name="action" value="reject">
+            <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
+            <input type="text" name="reason" placeholder="拒绝原因（选填）">
+            <button class="btn btn-reject" style="font-size:11px;padding:6px 12px">确认</button>
+            <button type="button" class="btn btn-outline" style="font-size:11px" onclick="toggleReject(this)">取消</button>
+          </form>
+        <?php endif; ?>
+        <?php if ($item['status'] !== 'pending'): ?>
+          <form method="POST" style="display:inline"><input type="hidden" name="action" value="restore"><input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>"><button class="btn btn-outline" style="color:var(--amber)">↩️ 恢复待审</button></form>
+        <?php endif; ?>
+        <form method="POST" style="display:inline" onsubmit="return confirm('确认删除 <?= htmlspecialchars($item['code']) ?>？')"><input type="hidden" name="action" value="delete"><input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>"><button class="btn btn-outline" style="color:var(--red)">🗑️ 删除</button></form>
+        <a href="/profile?highlight=<?= htmlspecialchars($item['code']) ?>" class="btn btn-outline" style="font-size:11px" target="_blank">👤 查看用户</a>
+      </div>
+    </div>
+  <?php endforeach; endif; ?>
+
+  <!-- 邮件设置（折叠） -->
+  <div class="card" style="margin-top:24px">
+    <div onclick="var e=this.nextElementSibling;e.style.display=e.style.display==='none'?'block':'none'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">
+      <strong style="font-size:14px">📧 邮件提醒设置 <span style="font-size:11px;color:var(--text-3);font-weight:400">▶ 点击展开</span></strong>
     </div>
     <div style="display:none">
     <form method="POST" style="margin-top:12px">
       <input type="hidden" name="action" value="save_notify">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">SMTP 服务器</label>
-          <input type="text" name="smtp_host" value="<?= htmlspecialchars($notifyConfig['smtp']['host'] ?? '') ?>" placeholder="smtp.office365.com" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">端口</label>
-          <input type="number" name="smtp_port" value="<?= (int)($notifyConfig['smtp']['port'] ?? 465) ?>" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">用户名</label>
-          <input type="text" name="smtp_user" value="<?= htmlspecialchars($notifyConfig['smtp']['user'] ?? '') ?>" placeholder="your@qq.com" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">密码</label>
-          <input type="password" name="smtp_pass" value="" placeholder="(不修改请留空)" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">加密方式</label>
-          <select name="smtp_enc" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-            <option value="ssl" <?= ($notifyConfig['smtp']['encryption']??'ssl')==='ssl'?'selected':'' ?>>SSL</option>
-             <option value="tls" <?= ($notifyConfig['smtp']['encryption']??'')==='tls'?'selected':'' ?>>STARTTLS</option>
-            <option value="none" <?= ($notifyConfig['smtp']['encryption']??'')==='none'?'selected':'' ?>>无加密</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">发件人邮箱</label>
-          <input type="email" name="smtp_from" value="<?= htmlspecialchars($notifyConfig['smtp']['from'] ?? 'noreply@your-domain.com') ?>" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">SMTP</label><input type="text" name="smtp_host" value="<?= htmlspecialchars($notifyConfig['smtp']['host'] ?? '') ?>" placeholder="smtp.example.com" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></div>
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">端口</label><input type="number" name="smtp_port" value="<?= (int)($notifyConfig['smtp']['port'] ?? 465) ?>" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></div>
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">用户名</label><input type="text" name="smtp_user" value="<?= htmlspecialchars($notifyConfig['smtp']['user'] ?? '') ?>" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></div>
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">密码</label><input type="password" name="smtp_pass" placeholder="不修改留空" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></div>
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">加密</label><select name="smtp_enc" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"><option value="ssl" <?= ($notifyConfig['smtp']['encryption']??'')==='ssl'?'selected':'' ?>>SSL</option><option value="tls" <?= ($notifyConfig['smtp']['encryption']??'')==='tls'?'selected':'' ?>>STARTTLS</option><option value="none" <?= ($notifyConfig['smtp']['encryption']??'')==='none'?'selected':'' ?>>无</option></select></div>
+        <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:3px">发件人</label><input type="email" name="smtp_from" value="<?= htmlspecialchars($notifyConfig['smtp']['from'] ?? '') ?>" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"></div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px">
-        <label style="font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:4px;cursor:pointer">
-          <input type="checkbox" name="notify_enabled" value="1" <?= $notifyConfig['enabled'] ? 'checked' : '' ?>>
-          启用邮件提醒
-        </label>
-        <input type="email" name="notify_email" value="<?= htmlspecialchars($notifyConfig['email']) ?>" placeholder="接收通知的邮箱" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:200px">
-        <select name="notify_level" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit">
-          <option value="all" <?= $notifyConfig['level']==='all'?'selected':'' ?>>所有待审提醒</option>
-          <option value="high" <?= $notifyConfig['level']==='high'?'selected':'' ?>>仅高风险待审提醒</option>
-        </select>
-        <button type="submit" class="btn btn-outline" style="font-size:12px;padding:6px 14px">保存设置</button>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" name="notify_enabled" value="1" <?= $notifyConfig['enabled']?'checked':'' ?>> 启用</label>
+        <input type="email" name="notify_email" value="<?= htmlspecialchars($notifyConfig['email']) ?>" placeholder="接收邮箱" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:180px">
+        <select name="notify_level" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"><option value="all" <?= $notifyConfig['level']==='all'?'selected':'' ?>>全部提醒</option><option value="high" <?= $notifyConfig['level']==='high'?'selected':'' ?>>仅高风险</option></select>
+        <button class="btn btn-outline" style="font-size:12px">保存</button>
       </div>
     </form>
-    <div style="font-size:11px;color:var(--text-3);margin-top:8px">
-      当前状态: <?= $notifyConfig['enabled'] ? '✅ 已启用' : '⏸️ 已暂停' ?> · 
-      接收邮箱: <?= htmlspecialchars($notifyConfig['email']) ?> · 
-      SMTP: <?= htmlspecialchars($notifyConfig['smtp']['host'] ?? '未配置') ?>:<?= (int)($notifyConfig['smtp']['port'] ?? 0) ?>
-    </div>
-    <!-- 测试按钮 -->
-    <form method="POST" style="display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+    <form method="POST" style="display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
       <input type="hidden" name="action" value="test_notify">
-      <span style="font-size:12px;color:var(--text-2);font-weight:600">📨 测试发送</span>
-      <input type="email" name="test_email" value="<?= htmlspecialchars($notifyConfig['email']) ?>" placeholder="测试接收邮箱" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;width:200px">
-      <button type="submit" class="btn btn-primary" style="font-size:12px;padding:6px 14px">发送测试邮件</button>
+      <input type="email" name="test_email" value="<?= htmlspecialchars($notifyConfig['email']) ?>" placeholder="测试邮箱" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:180px">
+      <button class="btn btn-primary" style="font-size:11px">发送测试</button>
     </form>
-  </div>
-
-  <div class="counts">
-    <div class="count-box"><div class="num" style="color:var(--amber)"><?= count($pending) ?></div><div class="lbl">待审核</div></div>
-    <div class="count-box"><div class="num" style="color:var(--green)"><?= count($approved) ?></div><div class="lbl">已通过</div></div>
-    <div class="count-box"><div class="num" style="color:var(--red)"><?= count($rejected) ?></div><div class="lbl">已拒绝</div></div>
-  </div>
-
-  <div class="sec-title">⏳ 待审核 <span style="font-size:13px;color:var(--text-3);font-weight:400"><?= count($pending) ?> 条</span></div>
-  <?php if (empty($pending)): ?>
-    <div class="empty">没有待审核的短链接 🎉</div>
-  <?php else: ?>
-    <?php foreach ($pending as $item): ?>
-    <div class="item">
-      <div class="code-row">
-        <div>
-          <span class="code"><a href="https://your-domain.com/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none">your-domain.com/<?= htmlspecialchars($item['code']) ?></a> ↗</span>
-          <span class="badge <?= $item['audit_level'] ?: 'review' ?>"><?= htmlspecialchars($item['audit_level'] ?: 'waiting') ?></span>
-        </div>
-        <span class="badge pending">待审</span>
-      </div>
-      <div class="url"><?= htmlspecialchars($item['url']) ?></div>
-      <div class="meta">
-        <span>生成时间: <?= htmlspecialchars($item['created']) ?></span>
-        <span>IP: <?= htmlspecialchars($item['creator_ip'] ?: '—') ?></span>
-        <span>检测: <?= htmlspecialchars($item['audit_reason'] ?: '—') ?></span>
-        <?php if ($item['creator_user']): ?>
-        <span>用户: <?= htmlspecialchars($item['creator_user']) ?> (ID: <?= (int)$item['creator_user_id'] ?>)</span>
-        <?php endif; ?>
-      </div>
-      <div class="actions">
-        <form method="POST" style="display:inline">
-          <input type="hidden" name="action" value="approve">
-          <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-          <button type="submit" class="btn btn-approve">✅ 通过</button>
-        </form>
-        <button type="button" class="btn btn-reject" onclick="toggleReject(this)">❌ 拒绝</button>
-        <form method="POST" style="display:inline-flex" class="reject-box" id="reject-<?= htmlspecialchars($item['code']) ?>">
-          <input type="hidden" name="action" value="reject">
-          <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-          <input type="text" name="reason" placeholder="拒绝原因（选填）" style="flex:1;min-width:120px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit">
-          <button type="submit" class="btn btn-reject" style="font-size:12px;padding:7px 14px">确认拒绝</button>
-          <button type="button" class="btn btn-outline" style="font-size:12px;padding:7px 14px" onclick="toggleReject(this.parentNode.previousElementSibling)">取消</button>
-        </form>
-      </div>
     </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
-
-  <div class="sec-title">✅ 已通过 (<?= count($approved) ?>)
-    <button class="toggle-view" onclick="toggleList('approved-list')">显示/隐藏</button>
-  </div>
-  <div id="approved-list" style="display:none">
-    <?php if (empty($approved)): ?><div class="empty">暂无</div>
-    <?php else: foreach ($approved as $item): ?>
-      <div class="item">
-        <div class="code-row"><span class="code"><a href="https://your-domain.com/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none">your-domain.com/<?= htmlspecialchars($item['code']) ?></a> ↗</span>
-          <span style="font-size:11px;color:var(--text-3)">点击: <?= (int)$item['clicks'] ?></span>
-        </div>
-        <div class="url"><?= htmlspecialchars($item['url']) ?></div>
-        <div class="meta">
-          <span>生成时间: <?= htmlspecialchars($item['created']) ?></span>
-          <span>IP: <?= htmlspecialchars($item['creator_ip'] ?: '—') ?></span>
-          <?php if ($item['creator_user']): ?>
-          <span>用户: <?= htmlspecialchars($item['creator_user']) ?> (ID: <?= (int)$item['creator_user_id'] ?>)</span>
-          <?php endif; ?>
-        </div>
-        <div class="actions">
-          <form method="POST" style="display:inline">
-            <input type="hidden" name="action" value="restore">
-            <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-            <button type="submit" class="btn btn-outline" style="color:var(--green);border-color:rgba(16,185,129,.3)">↩️ 恢复</button>
-          </form>
-          <form method="POST" style="display:inline" onsubmit="return confirm('确认删除短链接 your-domain.com/<?= htmlspecialchars($item['code']) ?>？')">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-            <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:rgba(239,68,68,.3)">🗑️ 删除</button>
-          </form>
-        </div>
-      </div>
-    <?php endforeach; endif; ?>
   </div>
 
-  <div class="sec-title">❌ 已拒绝 (<?= count($rejected) ?>)
-    <button class="toggle-view" onclick="toggleList('rejected-list')">显示/隐藏</button>
-  </div>
-  <div id="rejected-list" style="display:none">
-    <?php if (empty($rejected)): ?><div class="empty">暂无</div>
-    <?php else: foreach ($rejected as $item): ?>
-      <div class="item">
-        <div class="code-row"><span class="code"><a href="https://your-domain.com/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none">your-domain.com/<?= htmlspecialchars($item['code']) ?></a> ↗</span></div>
-        <div class="url"><?= htmlspecialchars($item['url']) ?></div>
-        <div class="meta">
-          <span>生成时间: <?= htmlspecialchars($item['created']) ?></span>
-          <span>IP: <?= htmlspecialchars($item['creator_ip'] ?: '—') ?></span>
-          <?php if ($item['creator_user']): ?>
-          <span>用户: <?= htmlspecialchars($item['creator_user']) ?> (ID: <?= (int)$item['creator_user_id'] ?>)</span>
-          <?php endif; ?>
-        </div>
-        <?php if (!empty($item['reject_reason'])): ?>
-        <div class="reason-box" style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12px;color:#991b1b">
-          <strong>原因：</strong><?= htmlspecialchars($item['reject_reason']) ?>
-        </div>
-        <?php endif; ?>
-        <div class="actions" style="margin-top:8px">
-          <form method="POST" style="display:inline">
-            <input type="hidden" name="action" value="restore">
-            <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-            <button type="submit" class="btn btn-outline" style="color:var(--green);border-color:rgba(16,185,129,.3)">↩️ 恢复</button>
-          </form>
-          <form method="POST" style="display:inline" onsubmit="return confirm('确认删除短链接 your-domain.com/<?= htmlspecialchars($item['code']) ?>？')">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="code" value="<?= htmlspecialchars($item['code']) ?>">
-            <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:rgba(239,68,68,.3)">🗑️ 删除</button>
-          </form>
-        </div>
-      </div>
-    <?php endforeach; endif; ?>
-  </div>
-
-  <p style="text-align:center;font-size:12px;color:var(--text-3);margin-top:24px"><a href="/" style="color:var(--primary)">← 返回首页</a></p>
+  <p style="text-align:center;font-size:12px;color:var(--text-3);margin-top:20px"><a href="/" style="color:var(--primary)">← 返回首页</a></p>
 <?php endif; ?>
 </div>
 <script>
 function toggleReject(btn) {
   var box = btn.nextElementSibling;
-  if (box && box.classList) {
-    box.classList.toggle('show');
-  }
-}
-function toggleList(id) {
-  var el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (box && box.classList) box.classList.toggle('show');
 }
 </script>
 </body>
