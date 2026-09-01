@@ -7,6 +7,7 @@
  */
 require __DIR__ . '/auth/session_init.php';
 require __DIR__ . '/admin_check.php';
+$DOMAIN = get_domain();
 
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $user = $_SESSION['user'] ?? [];
@@ -183,7 +184,7 @@ usort($myLinks, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? ''));
   <div class="empty">还没有生成过短链接</div>
 <?php else: foreach ($myLinks as $link): ?>
   <div class="item">
-    <div class="code"><a href="https://your-domain.com/<?= htmlspecialchars($link['code']) ?>" target="_blank" style="color:var(--primary);text-decoration:none">your-domain.com/<?= htmlspecialchars($link['code']) ?></a></div>
+    <div class="code"><a href="https://<?= htmlspecialchars($DOMAIN) ?>/<?= htmlspecialchars($link['code']) ?>" target="_blank" style="color:var(--primary);text-decoration:none"><?= htmlspecialchars($DOMAIN) ?>/<?= htmlspecialchars($link['code']) ?></a></div>
     <div class="url"><?= htmlspecialchars($link['url'] ?? '') ?></div>
     <div class="meta">
       <span>生成时间: <?= htmlspecialchars($link['created'] ?? '') ?></span>
@@ -192,7 +193,7 @@ usort($myLinks, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? ''));
     </div>
     <div class="actions">
       <button class="btn btn-outline" onclick="toggleEdit(this)">✏️ 修改跳转</button>
-      <form method="POST" style="display:inline" onsubmit="return confirm('确认删除 your-domain.com/<?= htmlspecialchars($link['code']) ?>？')">
+      <form method="POST" style="display:inline" onsubmit="return confirm('确认删除 <?= htmlspecialchars($DOMAIN) ?>/<?= htmlspecialchars($link['code']) ?>？')">
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="code" value="<?= htmlspecialchars($link['code']) ?>">
         <button type="submit" class="btn btn-outline btn-danger">🗑️ 删除</button>
@@ -211,7 +212,7 @@ usort($myLinks, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? ''));
 <p style="text-align:center;font-size:12px;color:var(--text-3);margin-top:24px"><a href="/" style="color:var(--primary)">← 返回首页</a> · <a href="/auth/logout.php" style="color:var(--red)">退出登录</a></p>
 
 <div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px;text-align:center;margin-top:24px;font-size:12px;color:var(--text-3)">
-<a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://your-domain.com/">YourLink</a>
+<a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://<?= htmlspecialchars($DOMAIN) ?>/">YourLink</a>
 </div>
 
 <script>

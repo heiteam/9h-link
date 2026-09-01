@@ -1,13 +1,14 @@
 <?php
 /**
- * 9H 短链接管理后台 v3
+ * 9H 短链接管理后台 v4
  * - 显示所有链接（按用户类型区分）
+ * - 支持批量通过/拒绝
  * - 支持筛选：全部/登录用户/未登录用户/指定用户
  * - 管理员链接独立标记
- * - 审核操作
  */
 require __DIR__ . '/auth/session_init.php';
 require __DIR__ . '/admin_check.php';
+$DOMAIN = get_domain();
 
 // ===== 权限检查 =====
 function is_admin() {
@@ -56,6 +57,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
         $tmp = $linksFile . '.tmp';
         file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
         rename($tmp, $linksFile);
+    }
+}
+
+// ===== 批量操作处理 =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin() && isset($_POST['batch_action'])) {
+    $batchAction = $_POST['batch_action'];
+    $codes = $_POST['batch_codes'] ?? [];
+    if (!is_array($codes)) $codes = [];
+    $codes = array_map(fn($c) => preg_replace('/[^A-Za-z0-9]/', '', $c), $codes);
+    $codes = array_filter($codes);
+    
+    if (!empty($codes)) {
+        $linksFile = __DIR__ . '/links.json';
+        $data = json_decode(@file_get_contents($linksFile), true);
+        if (!is_array($data)) $data = [];
+        $adminName = $user['username'] ?? 'admin';
+        $count = 0;
+        
+        foreach ($codes as $code) {
+            $target = null;
+            if (isset($data['links'][$code])) $target = &$data['links'][$code];
+            elseif (isset($data[$code])) $target = &$data[$code];
+            if ($target === null || !is_array($target)) continue;
+            
+            if ($batchAction === 'batch_approve') {
+                $target['status'] = 'approved';
+                $target['reviewed_at'] = date('Y-m-d H:i:s');
+                $target['reviewed_by'] = $adminName;
+                $count++;
+            } elseif ($batchAction === 'batch_reject') {
+                $target['status'] = 'rejected';
+                $target['reviewed_at'] = date('Y-m-d H:i:s');
+                $target['reviewed_by'] = $adminName;
+                $target['reject_reason'] = trim($_POST['batch_reason'] ?? '批量拒绝');
+                $count++;
+            } elseif ($batchAction === 'batch_delete') {
+                if (isset($data['links'][$code])) unset($data['links'][$code]);
+                elseif (isset($data[$code])) unset($data[$code]);
+                $count++;
+            }
+        }
+        
+        $tmp = $linksFile . '.tmp';
+        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
+        rename($tmp, $linksFile);
+        
+        $actionLabel = $batchAction === 'batch_approve' ? '通过' : ($batchAction === 'batch_reject' ? '拒绝' : '删除');
+        $flash = "✅ 批量{$actionLabel}：{$count} 条链接";
+    } else {
+        $flash = "⚠️ 未选中任何链接";
     }
 }
 
@@ -246,6 +297,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .unauth p{font-size:14px;color:var(--text-2);margin-bottom:20px;line-height:1.6}
 .sec-title{font-size:15px;font-weight:800;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
 .empty{text-align:center;color:var(--text-3);padding:30px 0;font-size:13px}
+.batch-cb{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
 .reason-box{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:11px;color:#991b1b}
 .toggle-view{background:none;border:none;color:var(--primary);font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit}
 .page-info{text-align:center;font-size:12px;color:var(--text-3);margin-top:16px}
@@ -338,11 +390,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="sec-title">📋 结果 (<?= count($filtered) ?> 条)</div>
   <?php if (empty($filtered)): ?>
     <div class="empty">没有匹配的链接</div>
-  <?php else: foreach ($filtered as $item): ?>
+  <?php else: ?>
+  <!-- 批量操作栏 -->
+  <form id="batch-form" method="POST" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600">
+      <input type="checkbox" id="batch-select-all" onchange="toggleSelectAll(this)"> 全选 (<span id="batch-count">0</span>)
+    </label>
+    <input type="hidden" name="batch_action" id="batch-action" value="">
+    <input type="hidden" name="batch_codes[]" id="batch-codes" value="">
+    <button type="button" class="btn btn-approve" onclick="submitBatch('batch_approve')" style="font-size:12px">✅ 批量通过</button>
+    <button type="button" class="btn btn-reject" onclick="submitBatch('batch_reject')" style="font-size:12px">❌ 批量拒绝</button>
+    <button type="button" class="btn btn-outline" onclick="submitBatch('batch_delete')" style="font-size:12px;color:var(--red);border-color:rgba(239,68,68,.3)" onsubmit="return confirm('确认批量删除选中的链接？')">🗑️ 批量删除</button>
+    <input type="text" name="batch_reason" placeholder="批量拒绝原因（选填）" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:180px">
+  </form>
+  <?php foreach ($filtered as $item): ?>
     <div class="item">
       <div class="code-row">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span class="code"><a href="https://9h.hk/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">9h.hk/<?= htmlspecialchars($item['code']) ?></a> ↗</span>
+          <input type="checkbox" class="batch-cb" value="<?= htmlspecialchars($item['code']) ?>" onchange="updateBatchCount()" style="cursor:pointer">
+          <span class="code"><a href="https://<?= $DOMAIN ?>/<?= htmlspecialchars($item['code']) ?>" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none"><?= $DOMAIN ?>/<?= htmlspecialchars($item['code']) ?></a> ↗</span>
           <span class="badge <?= $item['status'] ?>"><?= $item['status']==='pending'?'待审':($item['status']==='rejected'?'已拒绝':'已通过') ?></span>
           <?php if ($item['is_admin_link']): ?>
             <span class="badge admin">管理员</span>
@@ -432,6 +498,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 function toggleReject(btn) {
   var box = btn.nextElementSibling;
   if (box && box.classList) box.classList.toggle('show');
+}
+function toggleSelectAll(el) {
+  document.querySelectorAll('.batch-cb').forEach(function(cb){ cb.checked = el.checked; });
+  updateBatchCount();
+}
+function updateBatchCount() {
+  var checked = document.querySelectorAll('.batch-cb:checked').length;
+  document.getElementById('batch-count').textContent = checked;
+}
+function submitBatch(action) {
+  var codes = [];
+  document.querySelectorAll('.batch-cb:checked').forEach(function(cb){ codes.push(cb.value); });
+  if (codes.length === 0) { alert('请先勾选要操作的链接'); return; }
+  if (action === 'batch_delete' && !confirm('确认删除选中的 ' + codes.length + ' 条链接？')) return;
+  if (action === 'batch_reject' && !confirm('确认拒绝选中的 ' + codes.length + ' 条链接？')) return;
+  var input = document.getElementById('batch-codes');
+  input.value = codes.join(',');
+  // 将 codes 拆分为多个隐藏 input
+  var form = document.getElementById('batch-form');
+  // 移除旧的 hidden inputs
+  form.querySelectorAll('input[name="batch_codes[]"]').forEach(function(el){ if (el.id !== 'batch-codes') el.remove(); });
+  // 为每个 code 创建 hidden input
+  codes.forEach(function(c){
+    var h = document.createElement('input');
+    h.type = 'hidden';
+    h.name = 'batch_codes[]';
+    h.value = c;
+    form.appendChild(h);
+  });
+  document.getElementById('batch-action').value = action;
+  form.submit();
 }
 </script>
 </body>
