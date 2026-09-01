@@ -22,18 +22,16 @@ if (!$isLoggedIn) {
 
 $username = $user['username'] ?? '';
 $linksFile = __DIR__ . '/links.json';
-$data = json_decode(@file_get_contents($linksFile), true);
-$allLinks = $data['links'] ?? $data ?? [];
+require_once __DIR__ . '/link_functions.php';
+$allLinks = link_load($linksFile);
 
 // 处理 POST（编辑/删除）
 $flash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isLoggedIn) {
     $action = $_POST['action'] ?? '';
     $code = preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? '');
-    $target = null;
-    if (isset($allLinks[$code])) $target = &$allLinks[$code];
-    if ($target !== null && is_array($target)) {
-        // 只允许操作自己的链接
+    if (isset($allLinks[$code]) && is_array($allLinks[$code])) {
+        $target = &$allLinks[$code];
         $owner = $target['creator_user'] ?? '';
         if ($owner === $username || $isAdmin) {
             if ($action === 'delete') {
@@ -54,20 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isLoggedIn) {
             }
         }
     }
-    // 写回
-    if (isset($data['links'])) {
-        $data['links'] = $allLinks;
-    } else {
-        $data = $allLinks;
-    }
-    $tmp = $linksFile . '.tmp';
-    file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    rename($tmp, $linksFile);
+    link_save($linksFile, $allLinks);
 }
 
 // 重新加载显示数据
-$data = json_decode(@file_get_contents($linksFile), true);
-$allLinks = $data['links'] ?? $data ?? [];
+$allLinks = link_load($linksFile);
 $myLinks = [];
 foreach ($allLinks as $code => $v) {
     if (!is_array($v)) continue;

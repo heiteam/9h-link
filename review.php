@@ -8,6 +8,7 @@
  */
 require __DIR__ . '/auth/session_init.php';
 require __DIR__ . '/admin_check.php';
+require_once __DIR__ . '/link_functions.php';
 $DOMAIN = get_domain();
 
 // ===== 权限检查 =====
@@ -24,11 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
     $code = preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? '');
     $action = $_POST['action'] ?? '';
     $linksFile = __DIR__ . '/links.json';
-    $data = json_decode(@file_get_contents($linksFile), true);
-    if (!is_array($data)) $data = [];
-    $target = null;
-    if (isset($data['links'][$code])) $target = &$data['links'][$code];
-    elseif (isset($data[$code])) $target = &$data[$code];
+    $data = link_load($linksFile);
+    $target = $data[$code] ?? null;
 
     if ($target !== null && is_array($target)) {
         $adminName = $user['username'] ?? 'admin';
@@ -54,9 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
             $target['reviewed_by'] = '';
             $flash = "↩️ 已恢复：{$code}";
         }
-        $tmp = $linksFile . '.tmp';
-        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
-        rename($tmp, $linksFile);
+        link_save($linksFile, $data);
     }
 }
 
@@ -70,16 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin() && isset($_POST['batch_a
     
     if (!empty($codes)) {
         $linksFile = __DIR__ . '/links.json';
-        $data = json_decode(@file_get_contents($linksFile), true);
-        if (!is_array($data)) $data = [];
+        $data = link_load($linksFile);
         $adminName = $user['username'] ?? 'admin';
         $count = 0;
         
         foreach ($codes as $code) {
-            $target = null;
-            if (isset($data['links'][$code])) $target = &$data['links'][$code];
-            elseif (isset($data[$code])) $target = &$data[$code];
-            if ($target === null || !is_array($target)) continue;
+            if (!isset($data[$code]) || !is_array($data[$code])) continue;
+            $target = &$data[$code];
             
             if ($batchAction === 'batch_approve') {
                 $target['status'] = 'approved';
@@ -93,15 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin() && isset($_POST['batch_a
                 $target['reject_reason'] = trim($_POST['batch_reason'] ?? '批量拒绝');
                 $count++;
             } elseif ($batchAction === 'batch_delete') {
-                if (isset($data['links'][$code])) unset($data['links'][$code]);
-                elseif (isset($data[$code])) unset($data[$code]);
+                unset($data[$code]);
                 $count++;
             }
         }
         
-        $tmp = $linksFile . '.tmp';
-        file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT), LOCK_EX);
-        rename($tmp, $linksFile);
+        link_save($linksFile, $data);
         
         $actionLabel = $batchAction === 'batch_approve' ? '通过' : ($batchAction === 'batch_reject' ? '拒绝' : '删除');
         $flash = "✅ 批量{$actionLabel}：{$count} 条链接";
@@ -112,21 +102,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin() && isset($_POST['batch_a
 
 // ===== 加载所有链接 =====
 $linksFile = __DIR__ . '/links.json';
-$data = json_decode(@file_get_contents($linksFile), true);
-if (!is_array($data)) $data = [];
+$allLinksData = link_load($linksFile);
 $allLinks = [];
 $stats = ['total'=>0, 'pending'=>0, 'approved'=>0, 'rejected'=>0, 'login'=>0, 'anon'=>0, 'admin'=>0];
-$users = []; // 所有出现过的用户名
+$users = [];
 
-$all = $data['links'] ?? $data;
-if (is_array($all)) {
-    foreach ($all as $code => $v) {
-        if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $code)) continue;
-        if (!is_array($v)) $v = ['url' => $v];
-        $s = $v['status'] ?? 'approved';
-        $creatorUser = $v['creator_user'] ?? '';
-        $creatorType = $v['creator_type'] ?? ($creatorUser ? 'user' : 'anonymous');
-        $isAdminLink = ($creatorUser === $adminUsername);
+foreach ($allLinksData as $code => $v) {
+    if (!is_array($v)) continue;
+    $s = $v['status'] ?? 'approved';
+    $creatorUser = $v['creator_user'] ?? '';
+    $creatorType = $v['creator_type'] ?? ($creatorUser ? 'user' : 'anonymous');
+    $isAdminLink = ($creatorUser === $adminUsername);
 
         $item = [
             'code' => $code,

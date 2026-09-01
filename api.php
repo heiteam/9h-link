@@ -59,40 +59,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 $linksFile = __DIR__ . "/links.json";
 if (!file_exists($linksFile)) { file_put_contents($linksFile, json_encode([], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)); }
 
-function load_links($file) {
-    $raw = @file_get_contents($file);
-    $rawLinks = json_decode($raw ?: "[]", true);
-    if (!is_array($rawLinks)) { $rawLinks = []; }
-    $links = [];
-    if (isset($rawLinks["links"]) && is_array($rawLinks["links"])) {
-        foreach ($rawLinks["links"] as $code => $v) {
-            if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $code)) continue;
-            $url = is_array($v) ? ($v["url"] ?? "") : $v;
-            if (is_string($url) && $url !== "") $links[$code] = is_array($v) ? $v : ["url"=>$url];
-        }
-    }
-    foreach ($rawLinks as $k => $v) {
-        if ($k === "links" || !is_string($k) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $k)) continue;
-        $url = is_array($v) ? ($v["url"] ?? "") : $v;
-        if (is_string($url) && $url !== "") $links[$k] = is_array($v) ? $v : ["url"=>$url];
-    }
-    return $links;
-}
-
-function save_links($file, $links) {
-    $tmp = $file . ".tmp";
-    $json = json_encode($links, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    if ($json === false) return false;
-    $fp = fopen($tmp, "c");
-    if (!$fp) return false;
-    if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
-    ftruncate($fp, 0);
-    fwrite($fp, $json);
-    fflush($fp);
-    flock($fp, LOCK_UN);
-    fclose($fp);
-    return rename($tmp, $file);
-}
+// === 链接数据读写 ===
+require_once __DIR__ . "/link_functions.php";
+// 保留旧函数名兼容
+function load_links($file) { return link_load($file); }
+function save_links($file, $links) { return link_save($file, $links); }
 
 // 清理过期的被拒绝短链接和过期短链接
 function cleanup_expired_rejected($links, $file) {
