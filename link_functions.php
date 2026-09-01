@@ -13,14 +13,14 @@ function link_load($file) {
     if (isset($rawLinks["links"]) && is_array($rawLinks["links"])) {
         foreach ($rawLinks["links"] as $code => $v) {
             if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $code)) continue;
-            $url = is_array($v) ? ($v["url"] ?? "") : $v;
-            if (is_string($url) && $url !== "") $links[$code] = is_array($v) ? $v : ["url"=>$url];
+            if (is_array($v)) $links[$code] = $v;
+            elseif (is_string($v) && $v !== "") $links[$code] = ["url"=>$v];
         }
     }
     foreach ($rawLinks as $k => $v) {
         if ($k === "links" || !is_string($k) || !preg_match('/^[A-Za-z0-9]{2,12}$/', $k)) continue;
-        $url = is_array($v) ? ($v["url"] ?? "") : $v;
-        if (is_string($url) && $url !== "") $links[$k] = is_array($v) ? $v : ["url"=>$url];
+        if (is_array($v)) $links[$k] = $v;
+        elseif (is_string($v) && $v !== "") $links[$k] = ["url"=>$v];
     }
     return $links;
 }

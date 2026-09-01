@@ -26,30 +26,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin()) {
     $action = $_POST['action'] ?? '';
     $linksFile = __DIR__ . '/links.json';
     $data = link_load($linksFile);
-    $target = $data[$code] ?? null;
 
-    if ($target !== null && is_array($target)) {
+    if (isset($data[$code]) && is_array($data[$code])) {
         $adminName = $user['username'] ?? 'admin';
         if ($action === 'approve') {
-            $target['status'] = 'approved';
-            $target['reviewed_at'] = date('Y-m-d H:i:s');
-            $target['reviewed_by'] = $adminName;
+            $data[$code]['status'] = 'approved';
+            $data[$code]['reviewed_at'] = date('Y-m-d H:i:s');
+            $data[$code]['reviewed_by'] = $adminName;
             $flash = "✅ 已通过：{$code}";
         } elseif ($action === 'reject') {
-            $target['status'] = 'rejected';
-            $target['reviewed_at'] = date('Y-m-d H:i:s');
-            $target['reviewed_by'] = $adminName;
-            $target['reject_reason'] = trim($_POST['reason'] ?? '');
+            $data[$code]['status'] = 'rejected';
+            $data[$code]['reviewed_at'] = date('Y-m-d H:i:s');
+            $data[$code]['reviewed_by'] = $adminName;
+            $data[$code]['reject_reason'] = trim($_POST['reason'] ?? '');
             $flash = "❌ 已拒绝：{$code}";
         } elseif ($action === 'delete') {
-            if (isset($data['links'][$code])) unset($data['links'][$code]);
-            elseif (isset($data[$code])) unset($data[$code]);
+            unset($data[$code]);
             $flash = "🗑️ 已删除：{$code}";
         } elseif ($action === 'restore') {
-            $target['status'] = 'pending';
-            $target['reviewed_at'] = '';
-            $target['reject_reason'] = '';
-            $target['reviewed_by'] = '';
+            $data[$code]['status'] = 'pending';
+            $data[$code]['reviewed_at'] = '';
+            $data[$code]['reject_reason'] = '';
+            $data[$code]['reviewed_by'] = '';
             $flash = "↩️ 已恢复：{$code}";
         }
         link_save($linksFile, $data);
@@ -72,18 +70,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_admin() && isset($_POST['batch_a
         
         foreach ($codes as $code) {
             if (!isset($data[$code]) || !is_array($data[$code])) continue;
-            $target = &$data[$code];
             
             if ($batchAction === 'batch_approve') {
-                $target['status'] = 'approved';
-                $target['reviewed_at'] = date('Y-m-d H:i:s');
-                $target['reviewed_by'] = $adminName;
+                $data[$code]['status'] = 'approved';
+                $data[$code]['reviewed_at'] = date('Y-m-d H:i:s');
+                $data[$code]['reviewed_by'] = $adminName;
                 $count++;
             } elseif ($batchAction === 'batch_reject') {
-                $target['status'] = 'rejected';
-                $target['reviewed_at'] = date('Y-m-d H:i:s');
-                $target['reviewed_by'] = $adminName;
-                $target['reject_reason'] = trim($_POST['batch_reason'] ?? '批量拒绝');
+                $data[$code]['status'] = 'rejected';
+                $data[$code]['reviewed_at'] = date('Y-m-d H:i:s');
+                $data[$code]['reviewed_by'] = $adminName;
+                $data[$code]['reject_reason'] = trim($_POST['batch_reason'] ?? '批量拒绝');
                 $count++;
             } elseif ($batchAction === 'batch_delete') {
                 unset($data[$code]);
