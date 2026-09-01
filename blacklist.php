@@ -199,7 +199,7 @@ function audit_url($url) {
         'cutt.ly', 't.co', 'shorturl.at', 'rb.gy', 'short.link', 'clck.ru',
         'tiny.cc', 'bl.ink', 's.id', 'adf.ly', 'shorte.st', 'bc.vc',
         'u.to', 'c1n.cn', 'suowo.cn', 'suo.im', 'dwz.cn', 'url.cn',
-        'your-domain.com'];
+        'shorter.fm', 'rebrand.ly', 'cut.ly', 'yourshort.link'];
     foreach ($shortener_domains as $sd) {
         if ($host === $sd || str_ends_with($host, '.' . $sd)) {
             return ['ok' => true, 'reason' => '指向短链接服务，需人工审核', 'level' => 'review'];

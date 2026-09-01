@@ -28,12 +28,14 @@ if (isset($_GET['slug'])) {
     $slug = preg_replace('/[^a-z0-9-]/', '', $_GET['slug']);
     foreach ($articles as $a) {
         if ($a['slug'] === $slug) {
-            // 增加阅读量
+            // 增加阅读量（原子写入）
             $a['views'] = ($a['views'] ?? 0) + 1;
             foreach ($articles as &$aa) {
                 if ($aa['slug'] === $slug) $aa['views'] = $a['views'];
             }
-            file_put_contents($dataFile, json_encode($articles, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            $tmp = $dataFile . '.tmp';
+            file_put_contents($tmp, json_encode($articles, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+            rename($tmp, $dataFile);
             // 读取文章内容（路径穿越防护：仅允许 blog 目录内文件）
             $contentFile = __DIR__ . '/' . ltrim(str_replace('\\', '/', $a['content_file'] ?? ''), '/');
             $realBase = realpath(__DIR__);
