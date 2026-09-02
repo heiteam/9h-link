@@ -1,6 +1,6 @@
 <?php
 /**
- * YourLink 用户个人中心
+ * 9H 用户个人中心
  * - 显示 Linux.do 用户信息
  * - 列出自己生成的短链接，支持修改和删除
  * - 管理员快捷入口
@@ -73,7 +73,7 @@ usort($myLinks, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? ''));
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>个人中心 · YourLink</title>
+<title>个人中心 · 9H</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="/css/style.css">
 <style>
@@ -201,7 +201,7 @@ usort($myLinks, fn($a, $b) => strcmp($b['created'] ?? '', $a['created'] ?? ''));
 <p style="text-align:center;font-size:12px;color:var(--text-3);margin-top:24px"><a href="/" style="color:var(--primary)">← 返回首页</a> · <a href="/auth/logout.php" style="color:var(--red)">退出登录</a></p>
 
 <div class="footer" style="max-width:720px;margin:0 auto;padding:0 16px;text-align:center;margin-top:24px;font-size:12px;color:var(--text-3)">
-<a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://<?= htmlspecialchars($DOMAIN) ?>/">YourLink</a>
+<a href="/blog/">博客</a> · <a href="/faq">FAQ</a> · <a href="/guide">教程</a> · <a href="/stats">统计</a> · <a href="/about">关于</a> · <a href="/contact">联系</a> · <a href="/privacy-policy">隐私</a><br>© 2026 <a href="https://<?= htmlspecialchars($DOMAIN) ?>/">9H</a>
 </div>
 
 <script>
