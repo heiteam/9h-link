@@ -1,6 +1,6 @@
 <?php
 /**
- * 9H Link - 短链接 & 二维码生成器 API
+ * YourLink - 短链接 & 二维码生成器 API
  * 
  * 功能：短链接创建、跳转、统计、审核
  * 存储：JSON 文件（links.json）

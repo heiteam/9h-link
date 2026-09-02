@@ -49,7 +49,7 @@ return [
     // 填入 Linux.do 用户名（可在 https://linux.do 查看）
     // 多个管理员用逗号分隔
     // 拥有权限：审核短链接(/review)、博客管理(/blog/admin/)
-    'admin_users' => ['admin_username'],
+    'admin_users' => ['Boren.liu'],
 
     // === CDN（可选）===
     // 腾讯云 EdgeOne 或其他 CDN 的刷新接口凭证
